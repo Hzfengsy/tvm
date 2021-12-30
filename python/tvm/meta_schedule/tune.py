@@ -170,7 +170,6 @@ class DefaultCUDA:
             M.AutoInline(
                 into_producer=True,
                 into_consumer=True,
-                # into_cache_only=False,
                 inline_const_tensor=True,
                 disallow_if_then_else=False,
                 require_injective=False,
@@ -208,7 +207,7 @@ class DefaultCUDA:
         )
 
         return {
-            # M.MutateTileSize(): 0.9,
+            M.MutateTileSize(): 0.9,
             M.MutateUnroll(): 0.1,
         }
 

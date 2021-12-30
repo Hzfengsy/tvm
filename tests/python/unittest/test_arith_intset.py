@@ -102,7 +102,14 @@ def test_mod():
     floordiv = tvm.te.floordiv
     z = te.var("z")
     ck.analyzer.bind(x, tvm.ir.Range.from_min_extent(0, 3))
-    ck.verify(flm(y, 8), {y: tvm.arith.IntervalSet(z * 8 + x * 4, z * 8 + x * 4 + 3)}, (0, 7))
+    ck.verify(
+        flm(y, 8),
+        {y: tvm.arith.IntervalSet(z * 8 + x * 4, z * 8 + x * 4 + 3)},
+        (
+            z * 8 + x * 4 - 8 * floordiv(z * 8 + x * 4, 8),
+            z * 8 + x * 4 + 3 - 8 * floordiv(z * 8 + x * 4, 8),
+        ),
+    )
     ck1 = IntSetChecker()
     ck1.analyzer.bind(x, tvm.ir.Range.from_min_extent(0, 2))
     ck1.verify(

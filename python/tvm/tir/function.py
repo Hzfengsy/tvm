@@ -16,7 +16,7 @@
 # under the License.
 """Function data types."""
 
-from typing import Mapping, Union
+from typing import List, Mapping, Union
 
 import tvm._ffi
 import tvm.runtime
@@ -210,3 +210,23 @@ class TensorIntrin(Object):
             The TensorIntrin with the specified name.
         """
         return _ffi_api.TensorIntrinGet(name)  # pylint: type: ignore
+
+
+def concatenate(funcs: List[PrimFunc], param_map: Mapping[Var, Var]):
+    """Concatenate multiple PrimFuncs into fused one
+    Parameters
+    ----------
+    funcs: List[PrimFunc]
+        The PrimFuncs should be inlined. The list guides the order of fusion.
+
+    param_map: Mapping[Var, Var]
+        A map indicate how data exchange between functions.
+        The map is from consumer params to the producer params.
+
+    Returns
+    -------
+    func: PrimFunc
+        The fused function
+    """
+
+    return _ffi_api.Concatenate(funcs, param_map)  # type: ignore

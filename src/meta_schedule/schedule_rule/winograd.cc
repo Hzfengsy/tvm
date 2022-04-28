@@ -63,10 +63,17 @@ inline LoopRV ScheduleDataPack(Schedule sch, BlockRV block) {
   return t1[1];
 }
 
-TVM_REGISTER_GLOBAL("meta_schedule.winograd_inverse")
+TVM_REGISTER_GLOBAL("meta_schedule.winograd_inverse.llvm")
     .set_body_typed([](Schedule sch, BlockRV block) -> Array<Schedule> {
       ScheduleDataPack(sch, block);
       return {sch};
+    });
+
+TVM_REGISTER_GLOBAL("meta_schedule.winograd_inverse.cuda")
+    .set_body_typed([](Schedule sch, BlockRV block) -> Array<Schedule> {
+      ScheduleDataPack(sch, block);
+      Array<Integer> thread_extents = {32, 64, 128, 256, 512, 1024};
+      return {BindThreadsForUnboundBlock(sch, block, 256, 1024, thread_extents)};
     });
 
 TVM_REGISTER_GLOBAL("meta_schedule.winograd_data_pack.llvm")
@@ -89,7 +96,8 @@ TVM_REGISTER_GLOBAL("meta_schedule.winograd_data_pack.cuda")
       sch->ComputeAt(input_tile, /*loop_rv=*/loop, /*preserve_unit_loops=*/true);
       sch->SetScope(input_tile, /*buffer_index=*/0, /*storage_scope=*/"local");
       sch->ComputeInline(data_pad);
-      return {sch};
+      Array<Integer> thread_extents = {32, 64, 128, 256, 512, 1024};
+      return {BindThreadsForUnboundBlock(sch, data_pack, 256, 1024, thread_extents)};
     });
 
 }  // namespace tir

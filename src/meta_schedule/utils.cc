@@ -103,19 +103,12 @@ Schedule BindThreadsForUnboundBlock(const Schedule& sch,      //
                                     Array<Integer> thread_extents) {
   tir::StmtSRef block_sref = sch->GetSRef(block_rv);
 
-  // Step 1. Checking if the block is bound to threadIdx
-  if (!tir::IsUnboundBlock(block_sref)) {
-    return {sch};
-  }
-
-  // Step 2. Checking the BindType
   int fuse_first_num = 0;
   tir::BindType bind_type = tir::GetBindType(block_sref, &fuse_first_num);
   if (bind_type == tir::BindType::kNoBind) {
     return {sch};
   }
 
-  // Step 3. Fuse all loops which need to be bound
   Array<LoopRV> loop_rvs = sch->GetLoops(block_rv);
   LoopRV fused = sch->Fuse({loop_rvs.begin(), loop_rvs.begin() + fuse_first_num});
   if (bind_type == tir::BindType::kBindBlock) {
@@ -126,23 +119,22 @@ Schedule BindThreadsForUnboundBlock(const Schedule& sch,      //
       extent_size = *extent_ptr;
     }
 
+    Array<Integer> updated_extents;
+    for (const Integer extent : thread_extents) {
+      if (extent->value <= extent_size) updated_extents.push_back(extent);
+    }
+
     if (extent_size <= max_threadblock * max_num_threads) {
       tir::ExprRV factor;
-      if (thread_extents.empty()) {
-        factor = Integer(max_num_threads);
-      } else if (thread_extents.size() == 1) {
-        factor = thread_extents[0];
+      if (updated_extents.empty()) {
+        factor = Integer(std::min(static_cast<int64_t>(max_num_threads), extent_size));
+      } else if (updated_extents.size() == 1) {
+        factor = updated_extents[0];
       } else {
         // Sample a factor
-        int n = thread_extents.size();
+        int n = updated_extents.size();
         Array<FloatImm> probs(n, FloatImm(DataType::Float(64), 1.0 / n));
-        factor = sch->SampleCategorical(thread_extents, probs);
-      }
-      if (factor->IsInstance<IntImmNode>()) {
-        int64_t factor_value = Downcast<IntImm>(factor)->value;
-        if (extent_size <= factor_value) {
-          factor = Integer(extent_size);
-        }
+        factor = sch->SampleCategorical(updated_extents, probs);
       }
       Array<LoopRV> splits = sch->Split(fused, {NullOpt, factor});
       ICHECK_EQ(splits.size(), 2);

@@ -213,6 +213,13 @@ class ScheduleRule : public runtime::ObjectRef {
                                                          Array<Integer> unroll_max_steps,  //
                                                          bool unroll_explicit);
   /*!
+   * \brief Auto bind loops around the block to BlockIdx and ThreadIdx
+   * \param max_threadblock The maximum number of threadblock on GPU
+   * \param thread_extents Candidates of thread axis extent. Use `max_num_threads_` if it's empty.
+   * \return The schedule rule created
+   */
+  TVM_DLL static ScheduleRule AutoBind(int max_threadblock, Array<Integer> thread_extents);
+  /*!
    * \brief Create a schedule rule with customized methods on the python-side.
    * \param f_initialize_with_tune_context The packed function of `InitializeWithTuneContext`.
    * \param f_apply The packed function of `Apply`.

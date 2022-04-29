@@ -156,7 +156,7 @@ class DefaultCUDA:
                 unroll_max_steps=[0, 16, 64, 512, 1024],
                 unroll_explicit=True,
             ),
-            M.AutoBind(thread_extents=[32, 64, 128, 256, 512, 1024])
+            M.AutoBind(thread_extents=[32, 64, 128, 256, 512, 1024]),
         ]
 
     @staticmethod

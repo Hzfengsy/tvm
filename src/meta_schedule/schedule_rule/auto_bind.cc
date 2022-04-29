@@ -62,7 +62,7 @@ Array<tir::Schedule> AutoBindNode::Apply(const tir::Schedule& sch, const tir::Bl
 
   return {BindThreadsForUnboundBlock(sch, block_rv, max_num_threads_, max_threadblock_,
                                      thread_extents)};
-};
+}
 
 ScheduleRule ScheduleRule::AutoBind(int max_threadblock,  //
                                     Array<Integer> thread_extents) {

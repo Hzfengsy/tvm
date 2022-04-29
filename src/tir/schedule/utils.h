@@ -431,6 +431,23 @@ inline void ReorderAndFuseReductionLoops(const tir::Schedule& sch, const tir::Bl
   }
 }
 
+/********** Helper Functions for AutoBind and RewriteUnBoundBlock **********/
+
+/*!
+ * \brief Bind loops nesting to threadIdx for an unbound block.
+ * \param sch The input schedule.
+ * \param block_rv The input block.
+ * \param max_threadblock The max number of thread blocks
+ * \param max_num_threads The max number of threads per block
+ * \param thread_extents The candidates for thread extent
+ * \return The result schedule.
+ */
+Schedule BindThreadsForUnboundBlock(const Schedule& sch,      //
+                                    const BlockRV& block_rv,  //
+                                    int max_threadblock,      //
+                                    int max_num_threads,      //
+                                    Array<Integer> thread_extents);
+
 /******** Helper functions for enum conversion ********/
 
 /*!

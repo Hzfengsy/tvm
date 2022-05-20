@@ -17,9 +17,12 @@
  * under the License.
  */
 #include "../utils.h"
+#include "./auto_bind.h"
 
 namespace tvm {
-namespace tir {
+namespace meta_schedule {
+
+using namespace tvm::tir;
 
 TVM_REGISTER_GLOBAL("meta_schedule.compute_inline")
     .set_body_typed([](Schedule sch, BlockRV block) -> Array<Schedule> {
@@ -69,13 +72,6 @@ TVM_REGISTER_GLOBAL("meta_schedule.winograd_inverse.llvm")
       return {sch};
     });
 
-TVM_REGISTER_GLOBAL("meta_schedule.winograd_inverse.cuda")
-    .set_body_typed([](Schedule sch, BlockRV block) -> Array<Schedule> {
-      ScheduleDataPack(sch, block);
-      Array<Integer> thread_extents = {32, 64, 128, 256, 512, 1024};
-      return {BindThreadsForUnboundBlock(sch, block, 256, 1024, thread_extents)};
-    });
-
 TVM_REGISTER_GLOBAL("meta_schedule.winograd_data_pack.llvm")
     .set_body_typed([](Schedule sch, BlockRV data_pack) -> Array<Schedule> {
       BlockRV input_tile = GetOnlyProducer(sch, data_pack);
@@ -88,6 +84,18 @@ TVM_REGISTER_GLOBAL("meta_schedule.winograd_data_pack.llvm")
       return {sch};
     });
 
+TVM_REGISTER_GLOBAL("meta_schedule.winograd_inverse.cuda")
+    .set_body_typed([](Schedule sch, BlockRV block) -> Array<Schedule> {
+      ScheduleDataPack(sch, block);
+      int64_t max_threadblocks = 256;
+      int64_t max_threads_per_block = 1024;
+      auto get_factor = MakeFactorSampler(sch, {32, 64, 128, 256, 512, 1024});
+      if (Optional<LoopRV> loop = FuseSpatialAndBindBlockIdx(sch, block)) {
+        BindBlockThreadIdx(sch, loop.value(), max_threadblocks, max_threads_per_block, get_factor);
+      }
+      return {sch};
+    });
+
 TVM_REGISTER_GLOBAL("meta_schedule.winograd_data_pack.cuda")
     .set_body_typed([](Schedule sch, BlockRV data_pack) -> Array<Schedule> {
       BlockRV input_tile = GetOnlyProducer(sch, data_pack);
@@ -96,9 +104,14 @@ TVM_REGISTER_GLOBAL("meta_schedule.winograd_data_pack.cuda")
       sch->ComputeAt(input_tile, /*loop_rv=*/loop, /*preserve_unit_loops=*/true);
       sch->SetScope(input_tile, /*buffer_index=*/0, /*storage_scope=*/"local");
       sch->ComputeInline(data_pad);
-      Array<Integer> thread_extents = {32, 64, 128, 256, 512, 1024};
-      return {BindThreadsForUnboundBlock(sch, data_pack, 256, 1024, thread_extents)};
+      int64_t max_threadblocks = 256;
+      int64_t max_threads_per_block = 1024;
+      auto get_factor = MakeFactorSampler(sch, {32, 64, 128, 256, 512, 1024});
+      if (Optional<LoopRV> loop = FuseSpatialAndBindBlockIdx(sch, data_pack)) {
+        BindBlockThreadIdx(sch, loop.value(), max_threadblocks, max_threads_per_block, get_factor);
+      }
+      return {sch};
     });
 
-}  // namespace tir
+}  // namespace meta_schedule
 }  // namespace tvm

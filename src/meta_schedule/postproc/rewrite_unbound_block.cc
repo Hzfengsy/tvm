@@ -16,6 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+#include "../schedule_rule/auto_bind.h"
 #include "../utils.h"
 
 namespace tvm {
@@ -86,11 +87,11 @@ class RewriteUnboundBlockNode : public PostprocNode {
   // Inherited from PostprocNode
   void InitializeWithTuneContext(const TuneContext& context) final {
     CHECK(context->target.defined()) << "ValueError: target is not defined";
-    Optional<Integer> max_num_threads =
+    Optional<Integer> max_threads_per_block =
         context->target.value()->GetAttr<Integer>("max_threads_per_block");
-    CHECK(max_num_threads.defined())
+    CHECK(max_threads_per_block.defined())
         << "ValueError: missing attribute `max_threads_per_block` in the target";
-    this->max_num_threads_ = max_num_threads.value();
+    this->max_threads_per_block_ = max_threads_per_block.value();
   }
 
   // Inherited from PostprocNode
@@ -98,13 +99,13 @@ class RewriteUnboundBlockNode : public PostprocNode {
 
  public:
   /*! \brief The max number of threads per block from Target */
-  int max_num_threads_ = -1;
+  int max_threads_per_block_ = -1;
   /*! \brief The max number of threadblocks in the cuda device */
-  int max_threadblock_ = -1;
+  int max_threadblocks_ = -1;
 
   void VisitAttrs(tvm::AttrVisitor* v) {
-    // `max_num_threads_` is not visited
-    // `max_threadblock_` is not visited
+    // `max_threads_per_block_` is not visited
+    // `max_threadblocks_` is not visited
   }
 
   static constexpr const char* _type_key = "meta_schedule.RewriteUnboundBlock";
@@ -113,25 +114,28 @@ class RewriteUnboundBlockNode : public PostprocNode {
 
 bool RewriteUnboundBlockNode::Apply(const tir::Schedule& sch) {
   using tir::BlockRV;
+  using tir::ExprRV;
   using tir::LoopRV;
   using tir::Schedule;
-  ICHECK_NE(this->max_num_threads_, -1);
+  ICHECK_NE(this->max_threads_per_block_, -1);
+  auto get_factor = [t = this->max_threads_per_block_](int64_t) -> ExprRV { return Integer(t); };
   std::vector<std::pair<tir::StmtSRef, String>> unbound_blocks =
       tir::UnboundBlockFinder::Find(sch->state());
   for (const auto& kv : unbound_blocks) {
     tir::StmtSRef block_sref = kv.first;
     String global_var_name = kv.second;
     BlockRV block_rv = GetRVFromSRef(sch, block_sref, global_var_name);
-    BindThreadsForUnboundBlock(sch, block_rv, max_threadblock_, max_num_threads_,
-                               {max_num_threads_});
+    if (Optional<LoopRV> loop = FuseSpatialAndBindBlockIdx(sch, block_rv)) {
+      BindBlockThreadIdx(sch, loop.value(), max_threadblocks_, max_threads_per_block_, get_factor);
+    }
   }
   return true;
 }
 
-Postproc Postproc::RewriteUnboundBlock(int max_threadblock) {
+Postproc Postproc::RewriteUnboundBlock(int max_threadblocks) {
   ObjectPtr<RewriteUnboundBlockNode> n = make_object<RewriteUnboundBlockNode>();
-  n->max_threadblock_ = max_threadblock;
-  n->max_num_threads_ = -1;
+  n->max_threadblocks_ = max_threadblocks;
+  n->max_threads_per_block_ = -1;
   return Postproc(n);
 }
 

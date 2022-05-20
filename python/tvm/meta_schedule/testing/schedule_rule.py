@@ -32,7 +32,7 @@ from tvm.target import Target
 def auto_bind(target: Target) -> ScheduleRule:
     """Default schedule rules for auto bind"""
     if target.kind.name == "cuda":
-        return AutoBind(max_threadblock=256, thread_extents=[32, 64, 128, 256, 512, 1024])
+        return AutoBind(max_threadblocks=256, thread_extents=[32, 64, 128, 256, 512, 1024])
     raise NotImplementedError(f"{target.kind.name} is not supported")
 
 

@@ -29,21 +29,21 @@ class AutoBind(ScheduleRule):
 
     Parameters
     ----------
-    max_threadblock: int
+    max_threadblocks: int
         The maximum number of threadblock on GPU.
     thread_extents: Optional[List[int]]
-        Candidates of thread axis extent. Use `max_num_threads_` if it's empty.
+        Candidates of thread axis extent.
     """
 
     def __init__(
         self,
-        max_threadblock: int = 256,
+        max_threadblocks: int = 256,
         thread_extents: Optional[List[int]] = None,
     ) -> None:
         if thread_extents is None:
-            thread_extents = []
+            thread_extents = [32, 64, 128, 256, 512, 1024]
         self.__init_handle_by_constructor__(
             _ffi_api.ScheduleRuleAutoBind,  # type: ignore # pylint: disable=no-member
-            max_threadblock,
+            max_threadblocks,
             thread_extents,
         )

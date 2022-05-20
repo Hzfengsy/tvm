@@ -16,10 +16,11 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+#include "./auto_bind.h"
+
 #include "../utils.h"
 
 namespace tvm {
-
 namespace meta_schedule {
 
 class AutoBindNode : public ScheduleRuleNode {
@@ -27,11 +28,11 @@ class AutoBindNode : public ScheduleRuleNode {
   // Inherited from ScheduleRuleNode
   void InitializeWithTuneContext(const TuneContext& context) final {
     CHECK(context->target.defined()) << "ValueError: target is not defined";
-    Optional<Integer> max_num_threads =
+    Optional<Integer> max_threads_per_block =
         context->target.value()->GetAttr<Integer>("max_threads_per_block");
-    CHECK(max_num_threads.defined())
+    CHECK(max_threads_per_block.defined())
         << "ValueError: missing attribute `max_threads_per_block` in the target";
-    this->max_num_threads_ = max_num_threads.value();
+    this->max_threads_per_block_ = max_threads_per_block.value();
   }
 
   // Inherited from ScheduleRuleNode
@@ -39,18 +40,16 @@ class AutoBindNode : public ScheduleRuleNode {
 
  public:
   /*! \brief The max number of threads per block from Target */
-  int max_num_threads_ = -1;
+  int64_t max_threads_per_block_ = -1;
   /*! \brief The max number of threadblocks in the cuda device */
-  int max_threadblock_ = -1;
-  /*!
-   * \brief thread_extents Candidates of thread axis extent. Use `max_num_threads_` if it's empty.
-   */
-  Array<Integer> thread_extents;
+  int64_t max_threadblocks_ = -1;
+  /*! \brief thread_extents Candidates of thread axis extent. */
+  Array<Integer> thread_extents_;
 
   void VisitAttrs(tvm::AttrVisitor* v) {
-    // `max_num_threads_` is not visited
-    // `max_threadblock_` is not visited
-    v->Visit("thread_extents", &thread_extents);
+    // `max_threads_per_block_` is not visited
+    // `max_threadblocks_` is not visited
+    // `thread_extents_` is not visited
   }
 
   static constexpr const char* _type_key = "meta_schedule.AutoBind";
@@ -58,18 +57,19 @@ class AutoBindNode : public ScheduleRuleNode {
 };
 
 Array<tir::Schedule> AutoBindNode::Apply(const tir::Schedule& sch, const tir::BlockRV& block_rv) {
-  ICHECK_NE(this->max_num_threads_, -1);
-
-  return {BindThreadsForUnboundBlock(sch, block_rv, max_num_threads_, max_threadblock_,
-                                     thread_extents)};
+  ICHECK_NE(this->max_threads_per_block_, -1);
+  auto get_factor = MakeFactorSampler(sch, this->thread_extents_);
+  if (Optional<tir::LoopRV> loop = FuseSpatialAndBindBlockIdx(sch, block_rv)) {
+    BindBlockThreadIdx(sch, loop.value(), max_threadblocks_, max_threads_per_block_, get_factor);
+  }
+  return {sch};
 }
 
-ScheduleRule ScheduleRule::AutoBind(int max_threadblock,  //
-                                    Array<Integer> thread_extents) {
+ScheduleRule ScheduleRule::AutoBind(int max_threadblocks, Array<Integer> thread_extents) {
   ObjectPtr<AutoBindNode> n = make_object<AutoBindNode>();
-  n->max_threadblock_ = max_threadblock;
-  n->max_num_threads_ = -1;
-  n->thread_extents = std::move(thread_extents);
+  n->max_threadblocks_ = max_threadblocks;
+  n->max_threads_per_block_ = -1;
+  n->thread_extents_ = std::move(thread_extents);
   return ScheduleRule(n);
 }
 

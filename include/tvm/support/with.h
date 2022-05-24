@@ -67,6 +67,8 @@ class With {
   /*! \brief destructor, leaves the scope of the context. */
   ~With() DMLC_THROW_EXCEPTION { ctx_.ExitWithScope(); }
 
+  ContextType operator()() { return ctx_; }
+
  private:
   /*! \brief internal context type. */
   ContextType ctx_;

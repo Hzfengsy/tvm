@@ -16,43 +16,46 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-#ifndef TVM_SCRIPT_BUILDER_FRAME_H_
-#define TVM_SCRIPT_BUILDER_FRAME_H_
+#ifndef TVM_SCRIPT_BUILDER_TIR_PRIM_FUNC_FRAME_H_
+#define TVM_SCRIPT_BUILDER_TIR_PRIM_FUNC_FRAME_H_
 
-#include <tvm/node/node.h>
+#include "./tir.h"
 
 namespace tvm {
 namespace script {
 namespace builder {
+namespace tir {
 
-class FrameNode : public runtime::Object {
+class PrimFuncFrameNode : public TIRFrameNode {
  public:
-  std::vector<runtime::TypedPackedFunc<void()>> callbacks;
+  String name;
+  Array<tvm::tir::Var> args;
+  Type ret_type;
+  Map<tvm::tir::Var, tvm::tir::Buffer> buffer_map;
 
   void VisitAttrs(tvm::AttrVisitor* v) {
-    // `callbacks` is not visited.
+    TIRFrameNode::VisitAttrs(v);
+    v->Visit("name", &name);
+    v->Visit("args", &args);
+    v->Visit("ret_type", &ret_type);
+    v->Visit("buffer_map", &buffer_map);
   }
 
-  void AddCallback(runtime::TypedPackedFunc<void()> callback) { callbacks.push_back(callback); }
-
-  static constexpr const char* _type_key = "script.Frame";
-  TVM_DECLARE_BASE_OBJECT_INFO(FrameNode, runtime::Object);
-
- public:
-  virtual ~FrameNode() {
-    for (auto it = callbacks.rbegin(); it != callbacks.rend(); ++it) {
-      (*it)();
-    }
-  }
+  static constexpr const char* _type_key = "script.builder.tir.PrimFuncFrame";
+  TVM_DECLARE_FINAL_OBJECT_INFO(PrimFuncFrameNode, TIRFrameNode);
 };
 
-class Frame : public runtime::ObjectRef {
+class PrimFuncFrame : public TIRFrame {
  public:
-  TVM_DEFINE_NOTNULLABLE_OBJECT_REF_METHODS(Frame, ObjectRef, FrameNode);
+  TVM_DEFINE_MUTABLE_NOTNULLABLE_OBJECT_REF_METHODS(PrimFuncFrame, TIRFrame, PrimFuncFrameNode);
 };
 
+void Arg(tvm::tir::Var var);
+void Arg(tvm::tir::Buffer buffer);
+
+}  // namespace tir
 }  // namespace builder
 }  // namespace script
 }  // namespace tvm
 
-#endif  // TVM_SCRIPT_BUILDER_FRAME_H_
+#endif  // TVM_SCRIPT_BUILDER_TIR_PRIM_FUNC_FRAME_H_

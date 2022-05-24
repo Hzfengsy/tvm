@@ -16,14 +16,30 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-#include "./frame.h"
+
+#include "./prim_func_frame.h"
 
 namespace tvm {
 namespace script {
 namespace builder {
+namespace tir {
 
-TVM_REGISTER_NODE_TYPE(FrameNode);
+void Arg(tvm::tir::Var var) {
+  PrimFuncFrame frame = Builder::Current()->FindFrame<PrimFuncFrame>();
+  frame->args.push_back(var);
+}
 
+void Arg(tvm::tir::Buffer buffer) {
+  using namespace tvm::tir;
+  PrimFuncFrame frame = Builder::Current()->FindFrame<PrimFuncFrame>();
+  Var handle(buffer->name + "_handle", DataType::Handle());
+  frame->args.push_back(handle);
+  frame->buffer_map.Set(handle, buffer);
+}
+
+TVM_REGISTER_NODE_TYPE(PrimFuncFrameNode);
+
+}  // namespace tir
 }  // namespace builder
 }  // namespace script
 }  // namespace tvm

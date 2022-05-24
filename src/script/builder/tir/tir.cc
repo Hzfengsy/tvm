@@ -16,37 +16,16 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-#include "./builder.h"
+#include "./tir.h"
 
 namespace tvm {
 namespace script {
 namespace builder {
+namespace tir {
 
-std::vector<Builder>* ThreadLocalBuilderStack() {
-  thread_local std::vector<Builder> stack;
-  return &stack;
-}
+TVM_REGISTER_NODE_TYPE(TIRFrameNode);
 
-void Builder::EnterWithScope() {
-  std::vector<Builder>* stack = ThreadLocalBuilderStack();
-  stack->push_back(*this);
-}
-
-void Builder::ExitWithScope() {
-  std::vector<Builder>* stack = ThreadLocalBuilderStack();
-  CHECK(!stack->empty());
-  stack->pop_back();
-}
-
-Builder Builder::Current() {
-  std::vector<Builder>* stack = ThreadLocalBuilderStack();
-  CHECK(!stack->empty());
-  return stack->back();
-}
-
-TVM_REGISTER_NODE_TYPE(BuilderNode);
-TVM_REGISTER_NODE_TYPE(FrameNode);
-
+}  // namespace tir
 }  // namespace builder
 }  // namespace script
 }  // namespace tvm

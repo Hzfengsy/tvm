@@ -16,37 +16,42 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-#include "./builder.h"
+#ifndef TVM_SCRIPT_BUILDER_TIR_TIR_H_
+#define TVM_SCRIPT_BUILDER_TIR_TIR_H_
+
+#include <tvm/tir/stmt.h>
+
+#include "../builder.h"
 
 namespace tvm {
 namespace script {
 namespace builder {
+namespace tir {
 
-std::vector<Builder>* ThreadLocalBuilderStack() {
-  thread_local std::vector<Builder> stack;
-  return &stack;
-}
+class TIRFrameNode : public FrameNode {
+ public:
+  Array<tvm::tir::Stmt> stmts;
 
-void Builder::EnterWithScope() {
-  std::vector<Builder>* stack = ThreadLocalBuilderStack();
-  stack->push_back(*this);
-}
+  void VisitAttrs(tvm::AttrVisitor* v) {
+    FrameNode::VisitAttrs(v);
+    v->Visit("stmts", &stmts);
+  }
 
-void Builder::ExitWithScope() {
-  std::vector<Builder>* stack = ThreadLocalBuilderStack();
-  CHECK(!stack->empty());
-  stack->pop_back();
-}
+  static constexpr const char* _type_key = "script.builder.tir.TIRFrame";
+  TVM_DECLARE_BASE_OBJECT_INFO(TIRFrameNode, FrameNode);
+};
 
-Builder Builder::Current() {
-  std::vector<Builder>* stack = ThreadLocalBuilderStack();
-  CHECK(!stack->empty());
-  return stack->back();
-}
+class TIRFrame : public Frame {
+ public:
+  TVM_DEFINE_MUTABLE_NOTNULLABLE_OBJECT_REF_METHODS(TIRFrame, Frame, TIRFrameNode);
 
-TVM_REGISTER_NODE_TYPE(BuilderNode);
-TVM_REGISTER_NODE_TYPE(FrameNode);
+ protected:
+  TIRFrame() = default;
+};
 
+}  // namespace tir
 }  // namespace builder
 }  // namespace script
 }  // namespace tvm
+
+#endif  // TVM_SCRIPT_BUILDER_TIR_TIR_H_

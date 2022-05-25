@@ -23,24 +23,28 @@ namespace script {
 namespace builder {
 namespace tir {
 
-ForFrame::ForFrame(Array<tvm::tir::Var> loop_vars, ForFrame::FMakeForLoop f_make_for_loop) {
+ForFrame::ForFrame(Array<tvm::tir::Var> vars, Array<Range> doms,
+                   ForFrameNode::FMakeForLoop f_make_for_loop) {
   ObjectPtr<ForFrameNode> n = make_object<ForFrameNode>();
-  n->loop_vars = std::move(loop_vars);
+  n->vars = std::move(vars);
+  n->doms = std::move(doms);
   n->f_make_for_loop = std::move(f_make_for_loop);
   data_ = std::move(n);
 }
 
-#define TVM_SCRIPT_BUILDER_TIR_FOR_CREATE(Method, Kind)                                         \
-  With<ForFrame> Method(PrimExpr min, PrimExpr extent, Map<String, ObjectRef> attrs) {          \
-    ObjectPtr<ForFrameNode> n = make_object<ForFrameNode>();                                    \
-    int bits = std::max(min.dtype().bits(), extent.dtype().bits());                             \
-    n->loop_vars = {tvm::tir::Var("v", DataType::Int(bits))};                                   \
-    n->f_make_for_loop = [=](Array<tvm::tir::Var> vars, tvm::tir::Stmt body) -> tvm::tir::For { \
-      ICHECK_EQ(vars.size(), 1);                                                                \
-      return tvm::tir::For(/*loop_var=*/vars[0], min, extent, Kind, body,                       \
-                           /*thread_binding=*/NullOpt, attrs);                                  \
-    };                                                                                          \
-    return With<ForFrame>(n);                                                                   \
+#define TVM_SCRIPT_BUILDER_TIR_FOR_CREATE(Method, Kind)                               \
+  ForFrame Method(PrimExpr min, PrimExpr extent, Map<String, ObjectRef> attrs) {      \
+    using namespace tvm::tir;                                                         \
+    ObjectPtr<ForFrameNode> n = make_object<ForFrameNode>();                          \
+    int bits = std::max(min.dtype().bits(), extent.dtype().bits());                   \
+    n->vars = {Var("v", DataType::Int(bits))};                                        \
+    n->doms = {Range(min, extent)};                                                   \
+    n->f_make_for_loop = [attrs](Array<Var> vars, Array<Range> doms, Stmt body) {     \
+      ICHECK_EQ(vars.size(), 1);                                                      \
+      ICHECK_EQ(doms.size(), 1);                                                      \
+      return For(vars[0], doms[0]->min, doms[0]->extent, Kind, body, NullOpt, attrs); \
+    };                                                                                \
+    return ForFrame(n);                                                               \
   }
 
 TVM_SCRIPT_BUILDER_TIR_FOR_CREATE(Serial, tvm::tir::ForKind::kSerial);
@@ -50,39 +54,44 @@ TVM_SCRIPT_BUILDER_TIR_FOR_CREATE(Unroll, tvm::tir::ForKind::kUnrolled);
 
 #undef TVM_SCRIPT_BUILDER_TIR_FOR_CREATE
 
-With<ForFrame> ThreadBinding(PrimExpr min, PrimExpr extent, String thread,
-                             Map<String, ObjectRef> attrs) {
+ForFrame ThreadBinding(PrimExpr min, PrimExpr extent, String thread, Map<String, ObjectRef> attrs) {
   using namespace tvm::tir;
   ObjectPtr<ForFrameNode> n = make_object<ForFrameNode>();
   int bits = std::max(min.dtype().bits(), extent.dtype().bits());
-  n->loop_vars = {Var("v", DataType::Int(bits))};
-  n->f_make_for_loop = [=](Array<Var> vars, Stmt body) -> For {
+  n->vars = {Var("v", DataType::Int(bits))};
+  n->doms = {Range(min, extent)};
+  n->f_make_for_loop = [attrs, thread](Array<Var> vars, Array<Range> doms, Stmt body) -> For {
     ICHECK_EQ(vars.size(), 1);
-    IterVar iter_var(Range(nullptr), Var(ObjectPtr<Object>(nullptr)), IterVarType::kThreadIndex,
-                     thread);
-    return For(vars[0], min, extent, tvm::tir::ForKind::kThreadBinding, body, iter_var, attrs);
+    ICHECK_EQ(doms.size(), 1);
+    IterVar iter_var(Range(nullptr), NullValue<Var>(), IterVarType::kThreadIndex, thread);
+    return For(vars[0], doms[0]->min, doms[0]->extent, ForKind::kThreadBinding, body, iter_var,
+               attrs);
   };
-  return With<ForFrame>(n);
+  return ForFrame(n);
 }
 
-With<ForFrame> Grid(Array<PrimExpr> extents) {
+ForFrame Grid(Array<PrimExpr> extents) {
   using namespace tvm::tir;
   ObjectPtr<ForFrameNode> n = make_object<ForFrameNode>();
-  n->loop_vars.reserve(extents.size());
+  n->vars.reserve(extents.size());
+  n->doms.reserve(extents.size());
   for (const auto& extent : extents) {
-    n->loop_vars.push_back(Var("v", extent.dtype()));
+    DataType dtype = extent.dtype();
+    n->vars.push_back(Var("v", extent.dtype()));
+    n->doms.push_back(Range(make_const(dtype, 0), extent));
   }
-  n->f_make_for_loop = [=](Array<Var> vars, Stmt body) -> Stmt {
-    ICHECK_EQ(extents.size(), vars.size());
-    int n = extents.size();
+  n->f_make_for_loop = [](Array<Var> vars, Array<Range> doms, Stmt body) -> Stmt {
+    ICHECK_EQ(vars.size(), doms.size());
+    int n = vars.size();
     for (int i = n - 1; i >= 0; --i) {
+      Range dom = doms[i];
       Var var = vars[i];
-      PrimExpr extent = extents[i];
-      body = For(var, Integer(0), extent, ForKind::kSerial, body, /*thread_binding=*/NullOpt, {});
+      body = For(var, dom->min, dom->extent, ForKind::kSerial, std::move(body),
+                 /*thread_binding=*/NullOpt, /*annotations=*/{});
     }
     return body;
   };
-  return With<ForFrame>(n);
+  return ForFrame(n);
 }
 
 TVM_REGISTER_NODE_TYPE(ForFrameNode);

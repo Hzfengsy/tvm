@@ -34,13 +34,15 @@ namespace tir {
 class ForFrameNode : public TIRFrameNode {
  public:
   using FMakeForLoop =
-      runtime::TypedPackedFunc<tvm::tir::Stmt(Array<tvm::tir::Var>, tvm::tir::Stmt)>;
+      runtime::TypedPackedFunc<tvm::tir::Stmt(Array<tvm::tir::Var>, Array<Range>, tvm::tir::Stmt)>;
 
-  Array<tvm::tir::Var> loop_vars;
+  Array<tvm::tir::Var> vars;
+  Array<Range> doms;
   FMakeForLoop f_make_for_loop;
 
   void VisitAttrs(tvm::AttrVisitor* v) {
-    v->Visit("loop_vars", &loop_vars);
+    v->Visit("vars", &vars);
+    v->Visit("doms", &doms);
     // `f_make_for_loop` is not visited.
   }
 
@@ -50,9 +52,8 @@ class ForFrameNode : public TIRFrameNode {
 
 class ForFrame : public TIRFrame {
  public:
-  using FMakeForLoop = ForFrameNode::FMakeForLoop;
-
-  explicit ForFrame(Array<tvm::tir::Var> loop_vars, FMakeForLoop f_make_for_loop);
+  explicit ForFrame(Array<tvm::tir::Var> vars, Array<Range> doms,
+                    ForFrameNode::FMakeForLoop f_make_for_loop);
 
   void EnterWithScope() { ICHECK(data_ != nullptr); }
 
@@ -64,13 +65,13 @@ class ForFrame : public TIRFrame {
   TVM_DEFINE_MUTABLE_NOTNULLABLE_OBJECT_REF_METHODS(ForFrame, TIRFrame, ForFrameNode);
 };
 
-With<ForFrame> Serial(PrimExpr min, PrimExpr extent, Map<String, ObjectRef> annotations);
-With<ForFrame> Parallel(PrimExpr min, PrimExpr extent, Map<String, ObjectRef> annotations);
-With<ForFrame> Vectorized(PrimExpr min, PrimExpr extent, Map<String, ObjectRef> annotations);
-With<ForFrame> Unroll(PrimExpr min, PrimExpr extent, Map<String, ObjectRef> annotations);
-With<ForFrame> ThreadBinding(PrimExpr min, PrimExpr extent, String thread,
-                             Map<String, ObjectRef> annotations);
-With<ForFrame> Grid(Array<PrimExpr> extents);
+ForFrame Serial(PrimExpr min, PrimExpr extent, Map<String, ObjectRef> annotations);
+ForFrame Parallel(PrimExpr min, PrimExpr extent, Map<String, ObjectRef> annotations);
+ForFrame Vectorized(PrimExpr min, PrimExpr extent, Map<String, ObjectRef> annotations);
+ForFrame Unroll(PrimExpr min, PrimExpr extent, Map<String, ObjectRef> annotations);
+ForFrame ThreadBinding(PrimExpr min, PrimExpr extent, String thread,
+                       Map<String, ObjectRef> annotations);
+ForFrame Grid(Array<PrimExpr> extents);
 
 }  // namespace tir
 }  // namespace builder

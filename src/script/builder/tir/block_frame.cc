@@ -42,6 +42,7 @@ BlockFrame Block_(String name) {
 
 void BlockFrameNode::ExitWithScope() {
   using namespace tvm::tir;
+  TIRFrameNode::ExitWithScope();
   AddToParent(BlockRealize(iter_values,  //
                            predicate.value_or(Bool(true)),
                            Block(iter_vars,      //
@@ -82,7 +83,7 @@ tvm::tir::IterVar Spatial(Range dom, PrimExpr binding, DataType dtype) {
 
 tvm::tir::IterVar Reduce(Range dom, PrimExpr binding, DataType dtype) {
   using namespace tvm::tir;
-  ICHECK(dom.defined()) << "Spatial axis must have a domain";
+  ICHECK(dom.defined()) << "Reduction axis must have a domain";
   int bits = std::max({dom->min.dtype().bits(), dom->extent.dtype().bits(), dtype.bits()});
   return PushBlockVar(IterVar(/*dom=*/dom,                              //
                               /*var=*/Var("_", dtype.with_bits(bits)),  //
@@ -93,7 +94,7 @@ tvm::tir::IterVar Reduce(Range dom, PrimExpr binding, DataType dtype) {
 
 Array<tvm::tir::IterVar> Remap(String kinds, Array<PrimExpr> bindings, DataType dtype) {
   using namespace tvm::tir;
-  Array<tvm::tir::IterVar> results;
+  Array<IterVar> results;
   ICHECK_EQ(kinds.size(), bindings.size());
   int n = bindings.size();
   results.reserve(n);

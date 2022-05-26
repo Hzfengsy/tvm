@@ -54,8 +54,8 @@ class PrimFuncFrame : public TIRFrame {
 };
 
 PrimFuncFrame PrimFunc_(String name);
-void Arg(tvm::tir::Var var);
-void Arg(tvm::tir::Buffer buffer);
+tvm::tir::Var Arg(tvm::tir::Var var);
+tvm::tir::Buffer Arg(tvm::tir::Buffer buffer);
 
 }  // namespace tir
 }  // namespace builder

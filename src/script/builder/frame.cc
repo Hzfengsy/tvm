@@ -23,11 +23,13 @@ namespace script {
 namespace builder {
 
 void FrameNode::EnterWithScope() {
+  LOG(INFO) << "EnterWithScope: " << this->GetTypeKey();
   // Push to the current builder
   Builder::Current()->frames.push_back(GetRef<Frame>(this));
 }
 
 void FrameNode::ExitWithScope() {
+  LOG(INFO) << "ExitWithScope: " << this->GetTypeKey();
   for (auto it = callbacks.rbegin(); it != callbacks.rend(); ++it) {
     (*it)();
   }
@@ -39,7 +41,6 @@ IRModuleFrame::IRModuleFrame() {
   ObjectPtr<IRModuleFrameNode> n = make_object<IRModuleFrameNode>();
   n->global_vars.clear();
   n->functions.clear();
-  n->stmts.clear();
   data_ = std::move(n);
 }
 

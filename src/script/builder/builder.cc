@@ -39,31 +39,29 @@ void Builder::EnterWithScope() {
   CHECK(n->frames.empty()) << "ValueError: There are frame(s) left in the builder: "
                            << n->frames.size()
                            << ". Please use a fresh new builder every time building IRs";
-  n->frames.push_back(IRModuleFrame());
+  n->result = NullOpt;
   std::vector<Builder>* stack = ThreadLocalBuilderStack();
   stack->push_back(*this);
 }
 
 void Builder::ExitWithScope() {
-  BuilderNode* n = this->get();
-  ICHECK_EQ(n->frames.size(), 1);
-  IRModuleFrame frame = Downcast<IRModuleFrame>(n->frames.back());
-  n->frames.pop_back();
   std::vector<Builder>* stack = ThreadLocalBuilderStack();
   ICHECK(!stack->empty());
   stack->pop_back();
-  if (!frame->stmts.empty()) {
-    ICHECK(frame->global_vars.empty());
-    ICHECK(frame->functions.empty());
-    n->result = frame->stmts;
-  } else {
-    Map<GlobalVar, BaseFunc> func_map;
-    ICHECK_EQ(frame->functions.size(), frame->global_vars.size());
-    int m = frame->functions.size();
-    for (int i = 0; i < m; ++i) {
-      func_map.Set(frame->global_vars[i], frame->functions[i]);
-    }
-  }
+  // IRModuleFrame frame = Downcast<IRModuleFrame>(n->frames.back());
+  // n->frames.pop_back();
+  // if (!frame->stmts.empty()) {
+  //   ICHECK(frame->global_vars.empty());
+  //   ICHECK(frame->functions.empty());
+  //   n->result = frame->stmts;
+  // } else {
+  //   Map<GlobalVar, BaseFunc> func_map;
+  //   ICHECK_EQ(frame->functions.size(), frame->global_vars.size());
+  //   int m = frame->functions.size();
+  //   for (int i = 0; i < m; ++i) {
+  //     func_map.Set(frame->global_vars[i], frame->functions[i]);
+  //   }
+  // }
 }
 
 Builder Builder::Current() {

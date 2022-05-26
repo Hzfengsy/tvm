@@ -23,7 +23,10 @@ namespace script {
 namespace builder {
 namespace tir {
 
-void ForFrameNode::ExitWithScope() { AddToParent(f_make_for_loop(vars, doms, AsStmt(stmts))); }
+void ForFrameNode::ExitWithScope() {
+  TIRFrameNode::ExitWithScope();
+  AddToParent(f_make_for_loop(vars, doms, AsStmt(stmts)));
+}
 
 #define TVM_SCRIPT_BUILDER_TIR_FOR_CREATE(Method, Kind)                               \
   ForFrame Method(PrimExpr min, PrimExpr extent, Map<String, ObjectRef> attrs) {      \

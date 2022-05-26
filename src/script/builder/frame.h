@@ -60,13 +60,11 @@ class IRModuleFrameNode : public FrameNode {
  public:
   Array<GlobalVar> global_vars;
   Array<BaseFunc> functions;
-  Array<ObjectRef> stmts;
 
   void VisitAttrs(tvm::AttrVisitor* v) {
     FrameNode::VisitAttrs(v);
     v->Visit("global_vars", &global_vars);
     v->Visit("functions", &functions);
-    v->Visit("stmts", &stmts);
   }
 
   static constexpr const char* _type_key = "script.builder.IRModuleFrame";

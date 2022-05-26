@@ -28,12 +28,22 @@ namespace tir {
 
 void PrimFuncFrameNode::ExitWithScope() {
   using namespace tvm::tir;
-  IRModuleFrame frame = Builder::Current()->FindFrame<IRModuleFrame>().value();
-  frame->global_vars.push_back(GlobalVar(name));
-  frame->functions.push_back(PrimFunc(/*params=*/args,
-                                      /*body=*/AsStmt(stmts),
-                                      /*ret_type=*/ret_type,
-                                      /*buffer_map=*/buffer_map));
+  TIRFrameNode::ExitWithScope();
+  Builder builder = Builder::Current();
+  PrimFunc func(/*params=*/args,
+                /*body=*/AsStmt(stmts),
+                /*ret_type=*/ret_type,
+                /*buffer_map=*/buffer_map);
+  if (builder->frames.empty()) {
+    ICHECK(!builder->result.defined()) << "ValueError: Builder.result has already been set";
+    builder->result = func;
+  } else if (Optional<IRModuleFrame> opt_frame = builder->FindFrame<IRModuleFrame>()) {
+    IRModuleFrame frame = opt_frame.value();
+    frame->global_vars.push_back(GlobalVar(name));
+    frame->functions.push_back(func);
+  } else {
+    LOG(FATAL) << "ValueError: Cannot find where to insert PrimFunc";
+  }
 }
 
 PrimFuncFrame PrimFunc_(String name) {
@@ -45,17 +55,19 @@ PrimFuncFrame PrimFunc_(String name) {
   return PrimFuncFrame(n);
 }
 
-void Arg(tvm::tir::Var var) {
+tvm::tir::Var Arg(tvm::tir::Var var) {
   PrimFuncFrame frame = Builder::Current()->FindFrame<PrimFuncFrame>().value();
   frame->args.push_back(var);
+  return var;
 }
 
-void Arg(tvm::tir::Buffer buffer) {
+tvm::tir::Buffer Arg(tvm::tir::Buffer buffer) {
   using namespace tvm::tir;
   PrimFuncFrame frame = Builder::Current()->FindFrame<PrimFuncFrame>().value();
   Var handle(buffer->name + "_handle", DataType::Handle());
   frame->args.push_back(handle);
   frame->buffer_map.Set(handle, buffer);
+  return buffer;
 }
 
 TVM_REGISTER_NODE_TYPE(PrimFuncFrameNode);

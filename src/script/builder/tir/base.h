@@ -54,14 +54,13 @@ class TIRFrame : public Frame {
 
 inline void AddToParent(tvm::tir::Stmt stmt) {
   Builder builder = Builder::Current();
-  ICHECK(!builder->frames.empty());
-  Frame frame = builder->frames.back();
-  if (const auto* tir_frame = frame.as<TIRFrameNode>()) {
+  if (builder->frames.empty()) {
+    ICHECK(!builder->result.defined()) << "ValueError: Builder.result has already been set";
+    builder->result = stmt;
+  } else if (const auto* tir_frame = builder->frames.back().as<TIRFrameNode>()) {
     GetRef<TIRFrame>(tir_frame)->stmts.push_back(stmt);
-  } else if (const auto* mod_frame = frame.as<IRModuleFrameNode>()) {
-    GetRef<IRModuleFrame>(mod_frame)->stmts.push_back(stmt);
   } else {
-    LOG(FATAL) << "TypeError: Unsupported frame type: " << frame;
+    LOG(FATAL) << "TypeError: Unsupported frame type: " << builder->frames.back();
   }
 }
 

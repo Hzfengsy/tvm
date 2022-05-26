@@ -18,8 +18,11 @@
  */
 #include "./base.h"
 
+#include <tvm/node/node.h>
 #include <tvm/support/with.h>
+#include <tvm/tir/function.h>
 
+#include "../../../printer/text_printer.h"
 #include "./block_frame.h"
 #include "./for_frame.h"
 #include "./prim_func_frame.h"
@@ -39,8 +42,8 @@ void TestPOC() {
   With<Builder> builder;
   {
     With<PrimFuncFrame> _{T::PrimFunc_("main")};
-    Buffer A = T::Buffer_({128, 128, 128}, DataType::Float(32));
-    Buffer B = T::Buffer_({128, 128, 128}, DataType::Float(32));
+    Buffer A = T::Arg(T::Buffer_({128, 128, 128}, DataType::Float(32)));
+    Buffer B = T::Arg(T::Buffer_({128, 128, 128}, DataType::Float(32)));
     {
       With<ForFrame> _{T::Grid({128, 128, 128})};
       Var i = _()->vars[0];
@@ -50,11 +53,17 @@ void TestPOC() {
         With<BlockFrame> _{T::Block_("block")};
         IterVar vi = T::axis::Spatial(Range(0, 128), i);
         IterVar vj = T::axis::Spatial(Range(0, 128), j);
-        IterVar vk = T::axis::Spatial(Range(0, 128), k);
+        IterVar vk = T::axis::Reduce(Range(0, 128), k);
       }
+      LOG(INFO) << "ForFrame:\n" << _()->stmts;
     }
+    LOG(INFO) << "PrimFuncFrame:\n" << _()->stmts;
   }
+  PrimFunc func = builder()->Get<PrimFunc>();
+  LOG(INFO) << "func:\n" << AsTVMScript(func);
 }
+
+TVM_REGISTER_GLOBAL("test_poc").set_body_typed(TestPOC);
 
 }  // namespace tir
 }  // namespace builder

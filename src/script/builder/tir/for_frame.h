@@ -24,7 +24,7 @@
 #include <tvm/tir/op.h>
 #include <tvm/tir/stmt.h>
 
-#include "./tir.h"
+#include "./base.h"
 
 namespace tvm {
 namespace script {
@@ -41,6 +41,7 @@ class ForFrameNode : public TIRFrameNode {
   FMakeForLoop f_make_for_loop;
 
   void VisitAttrs(tvm::AttrVisitor* v) {
+    TIRFrameNode::VisitAttrs(v);
     v->Visit("vars", &vars);
     v->Visit("doms", &doms);
     // `f_make_for_loop` is not visited.
@@ -48,20 +49,13 @@ class ForFrameNode : public TIRFrameNode {
 
   static constexpr const char* _type_key = "script.builder.tir.ForFrame";
   TVM_DECLARE_FINAL_OBJECT_INFO(ForFrameNode, TIRFrameNode);
+
+ public:
+  void ExitWithScope() final;
 };
 
 class ForFrame : public TIRFrame {
  public:
-  explicit ForFrame(Array<tvm::tir::Var> vars, Array<Range> doms,
-                    ForFrameNode::FMakeForLoop f_make_for_loop);
-
-  void EnterWithScope() { ICHECK(data_ != nullptr); }
-
-  void ExitWithScope() {
-    ICHECK(data_ != nullptr);
-    data_.reset();
-  }
-
   TVM_DEFINE_MUTABLE_NOTNULLABLE_OBJECT_REF_METHODS(ForFrame, TIRFrame, ForFrameNode);
 };
 

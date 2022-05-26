@@ -23,14 +23,7 @@ namespace script {
 namespace builder {
 namespace tir {
 
-ForFrame::ForFrame(Array<tvm::tir::Var> vars, Array<Range> doms,
-                   ForFrameNode::FMakeForLoop f_make_for_loop) {
-  ObjectPtr<ForFrameNode> n = make_object<ForFrameNode>();
-  n->vars = std::move(vars);
-  n->doms = std::move(doms);
-  n->f_make_for_loop = std::move(f_make_for_loop);
-  data_ = std::move(n);
-}
+void ForFrameNode::ExitWithScope() { AddToParent(f_make_for_loop(vars, doms, AsStmt(stmts))); }
 
 #define TVM_SCRIPT_BUILDER_TIR_FOR_CREATE(Method, Kind)                               \
   ForFrame Method(PrimExpr min, PrimExpr extent, Map<String, ObjectRef> attrs) {      \

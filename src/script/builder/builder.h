@@ -21,60 +21,20 @@
 
 #include <tvm/node/node.h>
 
+#include "./frame.h"
+
 namespace tvm {
 namespace script {
 namespace builder {
 
-class FrameNode : public runtime::Object {
- public:
-  std::vector<runtime::TypedPackedFunc<void()>> callbacks;
-
-  void VisitAttrs(tvm::AttrVisitor* v) {
-    // `callbacks` is not visited.
-  }
-
-  void AddCallback(runtime::TypedPackedFunc<void()> callback) { callbacks.push_back(callback); }
-
-  static constexpr const char* _type_key = "script.builder.Frame";
-  TVM_DECLARE_BASE_OBJECT_INFO(FrameNode, runtime::Object);
-
- public:
-  virtual void EnterWithScope() {}
-
-  virtual void ExitWithScope() {}
-
-  virtual ~FrameNode() {
-    for (auto it = callbacks.rbegin(); it != callbacks.rend(); ++it) {
-      (*it)();
-    }
-  }
-};
-
-class Frame : public runtime::ObjectRef {
- public:
-  void EnterWithScope() {
-    ICHECK(data_ != nullptr);
-    static_cast<FrameNode*>(data_.get())->EnterWithScope();
-  }
-
-  void ExitWithScope() {
-    ICHECK(data_ != nullptr);
-    static_cast<FrameNode*>(data_.get())->ExitWithScope();
-    data_.reset();
-  }
-
-  TVM_DEFINE_NOTNULLABLE_OBJECT_REF_METHODS(Frame, ObjectRef, FrameNode);
-
- protected:
-  Frame() = default;
-};
-
 class BuilderNode : public runtime::Object {
  public:
   runtime::Array<Frame> frames;
+  Optional<ObjectRef> result;
 
   void VisitAttrs(tvm::AttrVisitor* v) {
-    v->Visit("frames", &frames);  //
+    v->Visit("frames", &frames);
+    v->Visit("result", &result);
   }
 
   static constexpr const char* _type_key = "script.builder.Builder";
@@ -82,28 +42,42 @@ class BuilderNode : public runtime::Object {
 
  public:
   template <typename TFrame>
-  Optional<TFrame> FindFrame() const {
-    using TFrameNode = typename TFrame::ContainerType;
-    for (auto it = frames.rbegin(); it != frames.rend(); ++it) {
-      if (const TFrameNode* p = (*it).template as<TFrameNode>()) {
-        return GetRef<TFrame>(p);
-      }
-    }
-    return NullOpt;
-  }
+  inline Optional<TFrame> FindFrame() const;
+
+  template <typename TObjectRef>
+  inline TObjectRef Get() const;
 };
 
 class Builder : public runtime::ObjectRef {
  public:
-  TVM_DEFINE_NOTNULLABLE_OBJECT_REF_METHODS(Builder, ObjectRef, BuilderNode);
+  Builder();
+  TVM_DEFINE_MUTABLE_NOTNULLABLE_OBJECT_REF_METHODS(Builder, ObjectRef, BuilderNode);
 
  public:
   void EnterWithScope();
-
   void ExitWithScope();
-
   static Builder Current();
 };
+
+template <typename TFrame>
+inline Optional<TFrame> BuilderNode::FindFrame() const {
+  using TFrameNode = typename TFrame::ContainerType;
+  for (auto it = frames.rbegin(); it != frames.rend(); ++it) {
+    if (const TFrameNode* p = (*it).template as<TFrameNode>()) {
+      return GetRef<TFrame>(p);
+    }
+  }
+  return NullOpt;
+}
+
+template <typename TObjectRef>
+inline TObjectRef BuilderNode::Get() const {
+  using TObject = typename TObjectRef::ContainerType;
+  CHECK(result.defined()) << "IndexError: No result exists in IRBuilder yet";
+  const auto* n = result.as<TObject>();
+  CHECK(n != nullptr) << "IndexError: IRBuilder result is not of type: " << TObject::_type_key;
+  return GetRef<TObjectRef>(n);
+}
 
 }  // namespace builder
 }  // namespace script

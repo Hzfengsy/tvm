@@ -19,7 +19,7 @@
 #ifndef TVM_SCRIPT_BUILDER_TIR_BLOCK_FRAME_H_
 #define TVM_SCRIPT_BUILDER_TIR_BLOCK_FRAME_H_
 
-#include "./tir.h"
+#include "./base.h"
 
 namespace tvm {
 namespace script {
@@ -30,8 +30,8 @@ class BlockFrameNode : public TIRFrameNode {
  public:
   String name;
   Array<tvm::tir::IterVar> iter_vars;
-  Optional<Array<tvm::tir::BufferRegion>> reads;
-  Optional<Array<tvm::tir::BufferRegion>> writes;
+  Array<tvm::tir::BufferRegion> reads;
+  Array<tvm::tir::BufferRegion> writes;
   Optional<tvm::tir::Stmt> init;
   Array<tvm::tir::Buffer> alloc_buffers;
   Array<tvm::tir::MatchBufferRegion> match_buffers;
@@ -41,6 +41,7 @@ class BlockFrameNode : public TIRFrameNode {
   Optional<PrimExpr> predicate;
 
   void VisitAttrs(tvm::AttrVisitor* v) {
+    TIRFrameNode::VisitAttrs(v);
     v->Visit("name", &name);
     v->Visit("iter_vars", &iter_vars);
     v->Visit("reads", &reads);
@@ -55,18 +56,23 @@ class BlockFrameNode : public TIRFrameNode {
 
   static constexpr const char* _type_key = "script.builder.tir.BlockFrame";
   TVM_DECLARE_FINAL_OBJECT_INFO(BlockFrameNode, TIRFrameNode);
+
+ public:
+  void ExitWithScope() final;
 };
 
 class BlockFrame : public TIRFrame {
  public:
-  explicit BlockFrame(String name);
   TVM_DEFINE_MUTABLE_NOTNULLABLE_OBJECT_REF_METHODS(BlockFrame, TIRFrame, BlockFrameNode);
 };
 
+BlockFrame Block_(String name);
+
 namespace axis {
-tvm::tir::IterVar Spatial(Range dom, PrimExpr binding, DataType dtype);
-tvm::tir::IterVar Reduce(Range dom, PrimExpr binding, DataType dtype);
-Array<tvm::tir::IterVar> Remap(String kinds, Array<PrimExpr> bindings, DataType dtype);
+tvm::tir::IterVar Spatial(Range dom, PrimExpr binding, DataType dtype = DataType::Int(32));
+tvm::tir::IterVar Reduce(Range dom, PrimExpr binding, DataType dtype = DataType::Int(32));
+Array<tvm::tir::IterVar> Remap(String kinds, Array<PrimExpr> bindings,
+                               DataType dtype = DataType::Int(32));
 }  // namespace axis
 }  // namespace tir
 }  // namespace builder

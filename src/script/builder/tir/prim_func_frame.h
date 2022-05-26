@@ -19,7 +19,7 @@
 #ifndef TVM_SCRIPT_BUILDER_TIR_PRIM_FUNC_FRAME_H_
 #define TVM_SCRIPT_BUILDER_TIR_PRIM_FUNC_FRAME_H_
 
-#include "./tir.h"
+#include "./base.h"
 
 namespace tvm {
 namespace script {
@@ -43,6 +43,9 @@ class PrimFuncFrameNode : public TIRFrameNode {
 
   static constexpr const char* _type_key = "script.builder.tir.PrimFuncFrame";
   TVM_DECLARE_FINAL_OBJECT_INFO(PrimFuncFrameNode, TIRFrameNode);
+
+ public:
+  void ExitWithScope() final;
 };
 
 class PrimFuncFrame : public TIRFrame {
@@ -50,6 +53,7 @@ class PrimFuncFrame : public TIRFrame {
   TVM_DEFINE_MUTABLE_NOTNULLABLE_OBJECT_REF_METHODS(PrimFuncFrame, TIRFrame, PrimFuncFrameNode);
 };
 
+PrimFuncFrame PrimFunc_(String name);
 void Arg(tvm::tir::Var var);
 void Arg(tvm::tir::Buffer buffer);
 

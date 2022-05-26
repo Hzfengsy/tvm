@@ -59,6 +59,26 @@ class Builder : public runtime::ObjectRef {
   static Builder Current();
 };
 
+template <class TObjectRef>
+inline TObjectRef Def(String name, TObjectRef obj);
+
+namespace details {
+ObjectRef DefImpl(String name, ObjectRef obj);
+}
+
+class Namer {
+ public:
+  using FType = NodeFunctor<void(const ObjectRef&, String)>;
+  static FType& vtable();
+
+  static void Name(ObjectRef node, String name);
+};
+
+template <class TObjectRef>
+inline TObjectRef Def(String name, TObjectRef obj) {
+  return Downcast<TObjectRef>(details::DefImpl(name, obj));
+}
+
 template <typename TFrame>
 inline Optional<TFrame> BuilderNode::FindFrame() const {
   using TFrameNode = typename TFrame::ContainerType;

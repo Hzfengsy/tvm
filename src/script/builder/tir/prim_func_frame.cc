@@ -55,14 +55,16 @@ PrimFuncFrame PrimFunc_(String name) {
   return PrimFuncFrame(n);
 }
 
-tvm::tir::Var Arg(tvm::tir::Var var) {
+tvm::tir::Var Arg(String name, tvm::tir::Var var) {
+  Namer::Name(var, name);
   PrimFuncFrame frame = Builder::Current()->FindFrame<PrimFuncFrame>().value();
   frame->args.push_back(var);
   return var;
 }
 
-tvm::tir::Buffer Arg(tvm::tir::Buffer buffer) {
+tvm::tir::Buffer Arg(String name, tvm::tir::Buffer buffer) {
   using namespace tvm::tir;
+  Namer::Name(buffer, name);
   PrimFuncFrame frame = Builder::Current()->FindFrame<PrimFuncFrame>().value();
   Var handle(buffer->name + "_handle", DataType::Handle());
   frame->args.push_back(handle);

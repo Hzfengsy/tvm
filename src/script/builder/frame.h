@@ -69,6 +69,9 @@ class IRModuleFrameNode : public FrameNode {
 
   static constexpr const char* _type_key = "script.builder.IRModuleFrame";
   TVM_DECLARE_FINAL_OBJECT_INFO(IRModuleFrameNode, FrameNode);
+
+ public:
+  void ExitWithScope() final;
 };
 
 class IRModuleFrame : public Frame {

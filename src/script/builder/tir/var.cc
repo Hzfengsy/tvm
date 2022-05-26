@@ -27,6 +27,42 @@ tvm::tir::Buffer Buffer_(Array<PrimExpr> shape, DataType dtype, String name, Str
   return tvm::tir::decl_buffer(shape, dtype, name, storage_scope);
 }
 
+TVM_STATIC_IR_FUNCTOR(Namer, vtable)
+    .set_dispatch<tvm::tir::BufferNode>([](const ObjectRef& node, String name) -> void {
+      using namespace tvm::tir;
+      BufferNode* buffer = const_cast<BufferNode*>(node.as<BufferNode>());
+      buffer->name = name;
+      Namer::Name(buffer->data, name + "_data");
+      int n = buffer->strides.size();
+      for (int i = 0; i < n; ++i) {
+        PrimExpr e = buffer->strides[i];
+        if (const VarNode* v = e.as<VarNode>()) {
+          Namer::Name(GetRef<Var>(v), name + "_s" + std::to_string(i));
+        }
+      }
+    });
+
+TVM_STATIC_IR_FUNCTOR(Namer, vtable)
+    .set_dispatch<tvm::tir::SizeVarNode>([](const ObjectRef& node, String name) -> void {
+      using namespace tvm::tir;
+      SizeVarNode* var = const_cast<SizeVarNode*>(node.as<SizeVarNode>());
+      var->name_hint = name;
+    });
+
+TVM_STATIC_IR_FUNCTOR(Namer, vtable)
+    .set_dispatch<tvm::tir::VarNode>([](const ObjectRef& node, String name) -> void {
+      using namespace tvm::tir;
+      VarNode* var = const_cast<VarNode*>(node.as<VarNode>());
+      var->name_hint = name;
+    });
+
+TVM_STATIC_IR_FUNCTOR(Namer, vtable)
+    .set_dispatch<tvm::tir::IterVarNode>([](const ObjectRef& node, String name) -> void {
+      using namespace tvm::tir;
+      IterVarNode* var = const_cast<IterVarNode*>(node.as<IterVarNode>());
+      Namer::Name(var->var, name);
+    });
+
 }  // namespace tir
 }  // namespace builder
 }  // namespace script

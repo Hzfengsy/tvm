@@ -42,18 +42,18 @@ void TestPOC() {
   With<Builder> builder;
   {
     With<PrimFuncFrame> _{T::PrimFunc_("main")};
-    Buffer A = T::Arg(T::Buffer_({128, 128, 128}, DataType::Float(32)));
-    Buffer B = T::Arg(T::Buffer_({128, 128, 128}, DataType::Float(32)));
+    Buffer A = T::Arg("A", T::Buffer_({128, 128, 128}, DataType::Float(32)));
+    Buffer B = T::Arg("B", T::Buffer_({128, 128, 128}, DataType::Float(32)));
     {
       With<ForFrame> _{T::Grid({128, 128, 128})};
-      Var i = _()->vars[0];
-      Var j = _()->vars[1];
-      Var k = _()->vars[2];
+      Var i = Def("i", _()->vars[0]);
+      Var j = Def("j", _()->vars[1]);
+      Var k = Def("k", _()->vars[2]);
       {
         With<BlockFrame> _{T::Block_("block")};
-        IterVar vi = T::axis::Spatial(Range(0, 128), i);
-        IterVar vj = T::axis::Spatial(Range(0, 128), j);
-        IterVar vk = T::axis::Reduce(Range(0, 128), k);
+        IterVar vi = Def("vi", T::axis::Spatial(Range(0, 128), i));
+        IterVar vj = Def("vj", T::axis::Spatial(Range(0, 128), j));
+        IterVar vk = Def("vk", T::axis::Reduce(Range(0, 128), k));
       }
       LOG(INFO) << "ForFrame:\n" << _()->stmts;
     }

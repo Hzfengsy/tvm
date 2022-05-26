@@ -48,20 +48,6 @@ void Builder::ExitWithScope() {
   std::vector<Builder>* stack = ThreadLocalBuilderStack();
   ICHECK(!stack->empty());
   stack->pop_back();
-  // IRModuleFrame frame = Downcast<IRModuleFrame>(n->frames.back());
-  // n->frames.pop_back();
-  // if (!frame->stmts.empty()) {
-  //   ICHECK(frame->global_vars.empty());
-  //   ICHECK(frame->functions.empty());
-  //   n->result = frame->stmts;
-  // } else {
-  //   Map<GlobalVar, BaseFunc> func_map;
-  //   ICHECK_EQ(frame->functions.size(), frame->global_vars.size());
-  //   int m = frame->functions.size();
-  //   for (int i = 0; i < m; ++i) {
-  //     func_map.Set(frame->global_vars[i], frame->functions[i]);
-  //   }
-  // }
 }
 
 Builder Builder::Current() {
@@ -69,6 +55,28 @@ Builder Builder::Current() {
   CHECK(!stack->empty()) << "ValueError: No builder in current scope";
   return stack->back();
 }
+
+Namer::FType& Namer::vtable() {
+  static FType inst;
+  return inst;
+}
+
+void Namer::Name(ObjectRef node, String name) {
+  static const FType& f = vtable();
+  CHECK(node.defined()) << "ValueError: Cannot name nullptr with: " << name;
+  CHECK(f.can_dispatch(node)) << "ValueError: Do not know how to name type \""
+                              << node->GetTypeKey();
+  f(node, name);
+}
+
+namespace details {
+
+ObjectRef DefImpl(String name, ObjectRef obj) {
+  Namer::Name(obj, name);
+  return obj;
+}
+
+}  // namespace details
 
 TVM_REGISTER_NODE_TYPE(BuilderNode);
 

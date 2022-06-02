@@ -14,10 +14,13 @@
 # KIND, either express or implied.  See the License for the
 # specific language governing permissions and limitations
 # under the License.
-"""TVM Script APIs of TVM Python Package, aimed to support TIR"""
+"""TVM Script TIR Buffer"""
+from tvm._ffi import register_object as _register_object
 
-from . import tir
-from . import relax
+from tvm.tir.buffer import Buffer
 
-from .builder import Builder
-from .parser import ir_module, from_source
+from . import _ffi_api
+
+
+def Buffer(shape, dtype, name="buffer", storage_scope="") -> Buffer:
+    return _ffi_api.Buffer(shape, dtype, name, storage_scope)

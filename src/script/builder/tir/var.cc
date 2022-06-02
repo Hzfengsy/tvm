@@ -63,6 +63,8 @@ TVM_STATIC_IR_FUNCTOR(Namer, vtable)
       Namer::Name(var->var, name);
     });
 
+TVM_REGISTER_GLOBAL("script.builder.tir.Buffer").set_body_typed(Buffer_);
+
 }  // namespace tir
 }  // namespace builder
 }  // namespace script

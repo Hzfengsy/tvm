@@ -46,7 +46,7 @@ class FrameNode : public runtime::Object {
 class Frame : public runtime::ObjectRef {
  public:
   virtual ~Frame() = default;
-  TVM_DEFINE_NOTNULLABLE_OBJECT_REF_METHODS(Frame, ObjectRef, FrameNode);
+  TVM_DEFINE_MUTABLE_NOTNULLABLE_OBJECT_REF_METHODS(Frame, ObjectRef, FrameNode);
 
  protected:
   Frame() = default;

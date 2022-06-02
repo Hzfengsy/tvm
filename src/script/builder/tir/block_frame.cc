@@ -18,6 +18,8 @@
  */
 #include "./block_frame.h"
 
+#include <tvm/runtime/registry.h>
+
 #include "./for_frame.h"
 
 namespace tvm {
@@ -143,6 +145,14 @@ Array<tvm::tir::IterVar> Remap(String kinds, Array<PrimExpr> bindings, DataType 
 }  // namespace axis
 
 TVM_REGISTER_NODE_TYPE(BlockFrameNode);
+
+TVM_REGISTER_GLOBAL("script.builder.tir.BlockFrame").set_body_typed(Block_);
+
+TVM_REGISTER_GLOBAL("script.builder.tir.AxisSpatial").set_body_typed(axis::Spatial);
+
+TVM_REGISTER_GLOBAL("script.builder.tir.AxisReduce").set_body_typed(axis::Reduce);
+
+TVM_REGISTER_GLOBAL("script.builder.tir.AxisRemap").set_body_typed(axis::Remap);
 
 }  // namespace tir
 }  // namespace builder

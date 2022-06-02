@@ -18,6 +18,8 @@
  */
 #include "./for_frame.h"
 
+#include <tvm/runtime/registry.h>
+
 namespace tvm {
 namespace script {
 namespace builder {
@@ -91,6 +93,18 @@ ForFrame Grid(Array<PrimExpr> extents) {
 }
 
 TVM_REGISTER_NODE_TYPE(ForFrameNode);
+
+TVM_REGISTER_GLOBAL("script.builder.tir.Serial").set_body_typed(Serial);
+
+TVM_REGISTER_GLOBAL("script.builder.tir.Parallel").set_body_typed(Parallel);
+
+TVM_REGISTER_GLOBAL("script.builder.tir.Vectorized").set_body_typed(Vectorized);
+
+TVM_REGISTER_GLOBAL("script.builder.tir.Unroll").set_body_typed(Unroll);
+
+TVM_REGISTER_GLOBAL("script.builder.tir.ThreadBinding").set_body_typed(ThreadBinding);
+
+TVM_REGISTER_GLOBAL("script.builder.tir.Grid").set_body_typed(Grid);
 
 }  // namespace tir
 }  // namespace builder

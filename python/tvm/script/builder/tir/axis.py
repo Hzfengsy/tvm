@@ -14,10 +14,24 @@
 # KIND, either express or implied.  See the License for the
 # specific language governing permissions and limitations
 # under the License.
-"""TVM Script APIs of TVM Python Package, aimed to support TIR"""
+"""TVM Script TIR Axis"""
 
-from . import tir
-from . import relax
+from . import _ffi_api
+from tvm.ir import Range
+from tvm.tir import IterVar
 
-from .builder import Builder
-from .parser import ir_module, from_source
+
+def spatial(dom, binding, dtype="int32") -> IterVar:
+    if not isinstance(dom, Range):
+        dom = Range(0, dom)
+    return _ffi_api.AxisSpatial(dom, binding, dtype)
+
+
+def reduce(dom, binding, dtype="int32") -> IterVar:
+    if not isinstance(dom, Range):
+        dom = Range(0, dom)
+    return _ffi_api.AxisReduce(dom, binding, dtype)
+
+
+def remap(kinds, bindings, dtype="int32") -> IterVar:
+    return _ffi_api.AxisRemap(kinds, bindings, dtype)

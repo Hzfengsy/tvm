@@ -74,6 +74,20 @@ tvm::tir::Buffer Arg(String name, tvm::tir::Buffer buffer) {
 
 TVM_REGISTER_NODE_TYPE(PrimFuncFrameNode);
 
+TVM_REGISTER_GLOBAL("script.builder.tir.PrimFuncFrame").set_body_typed(PrimFunc_);
+
+TVM_REGISTER_GLOBAL("script.builder.tir.Arg")
+    .set_body_typed([](String name, ObjectRef obj) -> ObjectRef {
+      using namespace tvm::tir;
+      if (const auto* var = obj.as<VarNode>()) {
+        return Arg(name, GetRef<Var>(var));
+      } else if (const auto* buffer = obj.as<BufferNode>()) {
+        return Arg(name, GetRef<Buffer>(buffer));
+      } else {
+        LOG(FATAL) << "ValueError: Unexpected type for TIR Arg.";
+      }
+    });
+
 }  // namespace tir
 }  // namespace builder
 }  // namespace script

@@ -14,10 +14,13 @@
 # KIND, either express or implied.  See the License for the
 # specific language governing permissions and limitations
 # under the License.
-"""TVM Script APIs of TVM Python Package, aimed to support TIR"""
+"""TVM Script TIR Frame"""
+from tvm._ffi import register_object as _register_object
 
-from . import tir
-from . import relax
+from . import _ffi_api
+from ..frame import Frame
 
-from .builder import Builder
-from .parser import ir_module, from_source
+
+@_register_object("script.builder.tir.TIRFrame")
+class TIRFrame(Frame):
+    pass

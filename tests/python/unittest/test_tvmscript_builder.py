@@ -14,10 +14,27 @@
 # KIND, either express or implied.  See the License for the
 # specific language governing permissions and limitations
 # under the License.
-"""TVM Script APIs of TVM Python Package, aimed to support TIR"""
 
-from . import tir
-from . import relax
+import tvm
+from tvm.script.builder import Builder, def_, def_many
+from tvm.script.builder import tir as T
 
-from .builder import Builder
-from .parser import ir_module, from_source
+
+def test_builder_basic():
+    b = Builder()
+    with b:
+        with T.prim_func(name="main"):
+            A = T.arg("A", T.Buffer((128, 128, 128), "float32"))
+            B = T.arg("B", T.Buffer((128, 128, 128), "float32"))
+            with T.grid(128, 128, 128) as (i, j, k):
+                def_many(["i", "j", "k"], [i, j, k])
+                with T.block(name="block"):
+                    vi = def_("vi", T.axis.spatial(128, i))
+                    vj = def_("vj", T.axis.spatial(128, j))
+                    vk = def_("vk", T.axis.reduce(128, k))
+    print(b.get().script())
+    tvm._ffi.get_global_func("test_poc")()
+
+
+if __name__ == "__main__":
+    test_builder_basic()

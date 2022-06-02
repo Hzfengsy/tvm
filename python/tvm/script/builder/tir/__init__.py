@@ -14,10 +14,20 @@
 # KIND, either express or implied.  See the License for the
 # specific language governing permissions and limitations
 # under the License.
-"""TVM Script APIs of TVM Python Package, aimed to support TIR"""
+# pylint: disable=unused-import
+"""Namespace for the TVMScript TIR Builder API."""
 
-from . import tir
-from . import relax
-
-from .builder import Builder
-from .parser import ir_module, from_source
+from .base import TIRFrame
+from .for_frame import (
+    ForFrame,
+    serial,
+    parallel,
+    vectorized,
+    unroll,
+    thread_binding,
+    grid,
+)
+from .prim_func_frame import prim_func, arg
+from .block_frame import block
+from .var import Buffer
+from . import axis

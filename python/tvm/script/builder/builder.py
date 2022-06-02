@@ -15,44 +15,47 @@
 # specific language governing permissions and limitations
 # under the License.
 """TVM Script IR Builder"""
-from typing import List
-from tvm._ffi import register_object as _register_object
-from .frame import Frame
+from typing import List, TypeVar
 
+from tvm._ffi import register_object as _register_object
 from tvm.runtime import Object
 
 from . import _ffi_api
-
-from typing import TypeVar
+from .frame import Frame
 
 
 @_register_object("script.builder.Builder")
 class Builder(Object):
     def __init__(self) -> None:
-        self.__init_handle_by_constructor__(_ffi_api.Builder)
+        self.__init_handle_by_constructor__(
+            _ffi_api.Builder  # pylint: disable=no-member # type: ignore
+        )
 
     def __enter__(self) -> "Builder":
-        _ffi_api.BuilderEnter(self)
+        _ffi_api.BuilderEnter(self)  # pylint: disable=no-member # type: ignore
         return self
 
-    def __exit__(self, ptype, value, trace) -> None:
-        _ffi_api.BuilderExit(self)
+    def __exit__(self, ptype, value, trace) -> None:  # pylint: disable=unused-argument
+        _ffi_api.BuilderExit(self)  # pylint: disable=no-member # type: ignore
 
     @staticmethod
-    def current(self) -> "Builder":
-        return _ffi_api.BuilderCurrent(self)
+    def current() -> "Builder":
+        return _ffi_api.BuilderCurrent()  # pylint: disable=no-member # type: ignore
 
     def get(self) -> Frame:
-        return _ffi_api.BuilderGet(self)
+        return _ffi_api.BuilderGet(self)  # pylint: disable=no-member # type: ignore
 
 
 DefType = TypeVar("DefType", bound=Object)
 
 
 def def_(name: str, var: DefType) -> DefType:
-    return _ffi_api.Def(name, var)
+    return _ffi_api.Def(name, var)  # pylint: disable=no-member # type: ignore
 
 
-def def_many(names: List[str], vars: List[DefType]) -> List[DefType]:
+def def_many(
+    names: List[str],
+    vars: List[DefType],  # pylint: disable=redefine-builtin
+) -> List[DefType]:
     assert len(names) == len(vars)
     return [def_(name, var) for name, var in zip(names, vars)]

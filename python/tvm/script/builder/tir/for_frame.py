@@ -15,42 +15,44 @@
 # specific language governing permissions and limitations
 # under the License.
 """TVM Script TIR For Frame"""
-from tvm._ffi import register_object as _register_object
+from typing import List
 
+from tvm._ffi import register_object as _register_object
 from tvm.tir import Var
 
 from . import _ffi_api
-from ._ffi_api import _base_ffi_api
+from .. import _ffi_api as _base_ffi_api
 from .base import TIRFrame
-from typing import List
 
 
 @_register_object("script.builder.tir.ForFrame")
 class ForFrame(TIRFrame):
     def __enter__(self) -> List[Var]:
-        _base_ffi_api.FrameEnter(self)
+        _base_ffi_api.FrameEnter(self)  # pylint: disable=no-member # type: ignore
         return self.vars
 
 
-def serial(min_val, extent, attrs) -> ForFrame:
-    return _ffi_api.Serial(min_val, extent, attrs)
+def serial(start, stop, annotations) -> ForFrame:
+    return _ffi_api.Serial(start, stop, annotations)  # pylint: disable=no-member # type: ignore
 
 
-def parallel(min_val, extent, attrs) -> ForFrame:
-    return _ffi_api.Parallel(min_val, extent, attrs)
+def parallel(start, stop, annotations) -> ForFrame:
+    return _ffi_api.Parallel(start, stop, annotations)  # pylint: disable=no-member # type: ignore
 
 
-def vectorized(min_val, extent, attrs) -> ForFrame:
-    return _ffi_api.Vectorized(min_val, extent, attrs)
+def vectorized(start, stop, annotations) -> ForFrame:
+    return _ffi_api.Vectorized(start, stop, annotations)  # pylint: disable=no-member # type: ignore
 
 
-def unroll(min_val, extent, attrs) -> ForFrame:
-    return _ffi_api.Unroll(min_val, extent, attrs)
+def unroll(start, stop, annotations) -> ForFrame:
+    return _ffi_api.Unroll(start, stop, annotations)  # pylint: disable=no-member # type: ignore
 
 
-def thread_binding(min_val, extent, attrs) -> ForFrame:
-    return _ffi_api.ThreadBinding(min_val, extent, attrs)
+def thread_binding(start, stop, thread, annotations) -> ForFrame:
+    return _ffi_api.ThreadBinding(  # pylint: disable=no-member # type: ignore
+        start, stop, thread, annotations
+    )
 
 
 def grid(*extents) -> ForFrame:
-    return _ffi_api.Grid(extents)
+    return _ffi_api.Grid(extents)  # pylint: disable=no-member # type: ignore

@@ -14,9 +14,7 @@
 # KIND, either express or implied.  See the License for the
 # specific language governing permissions and limitations
 # under the License.
-"""FFI APIs for tvm.script.builder"""
+"""FFI APIs for tvm.script.builder.tir"""
 import tvm._ffi
 
-from .. import _ffi_api as _base_ffi_api
-
-tvm._ffi._init_api("script.builder.tir", __name__)
+tvm._ffi._init_api("script.builder.tir", __name__) # pylint: disable=protected-access

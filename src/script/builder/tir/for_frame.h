@@ -59,11 +59,11 @@ class ForFrame : public TIRFrame {
   TVM_DEFINE_MUTABLE_NOTNULLABLE_OBJECT_REF_METHODS(ForFrame, TIRFrame, ForFrameNode);
 };
 
-ForFrame Serial(PrimExpr min, PrimExpr extent, Map<String, ObjectRef> annotations);
-ForFrame Parallel(PrimExpr min, PrimExpr extent, Map<String, ObjectRef> annotations);
-ForFrame Vectorized(PrimExpr min, PrimExpr extent, Map<String, ObjectRef> annotations);
-ForFrame Unroll(PrimExpr min, PrimExpr extent, Map<String, ObjectRef> annotations);
-ForFrame ThreadBinding(PrimExpr min, PrimExpr extent, String thread,
+ForFrame Serial(PrimExpr start, PrimExpr stop, Map<String, ObjectRef> annotations);
+ForFrame Parallel(PrimExpr start, PrimExpr stop, Map<String, ObjectRef> annotations);
+ForFrame Vectorized(PrimExpr start, PrimExpr stop, Map<String, ObjectRef> annotations);
+ForFrame Unroll(PrimExpr start, PrimExpr stop, Map<String, ObjectRef> annotations);
+ForFrame ThreadBinding(PrimExpr start, PrimExpr stop, String thread,
                        Map<String, ObjectRef> annotations);
 ForFrame Grid(Array<PrimExpr> extents);
 

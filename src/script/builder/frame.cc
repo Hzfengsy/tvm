@@ -24,14 +24,9 @@ namespace tvm {
 namespace script {
 namespace builder {
 
-void FrameNode::EnterWithScope() {
-  LOG(INFO) << "EnterWithScope: " << this->GetTypeKey();
-  // Push to the current builder
-  Builder::Current()->frames.push_back(GetRef<Frame>(this));
-}
+void FrameNode::EnterWithScope() { Builder::Current()->frames.push_back(GetRef<Frame>(this)); }
 
 void FrameNode::ExitWithScope() {
-  LOG(INFO) << "ExitWithScope: " << this->GetTypeKey();
   for (auto it = callbacks.rbegin(); it != callbacks.rend(); ++it) {
     (*it)();
   }
@@ -60,9 +55,7 @@ void IRModuleFrameNode::ExitWithScope() {
 
 TVM_REGISTER_NODE_TYPE(FrameNode);
 TVM_REGISTER_NODE_TYPE(IRModuleFrameNode);
-
 TVM_REGISTER_GLOBAL("script.builder.FrameEnter").set_body_method<Frame>(&FrameNode::EnterWithScope);
-
 TVM_REGISTER_GLOBAL("script.builder.FrameExit").set_body_method<Frame>(&FrameNode::ExitWithScope);
 
 }  // namespace builder

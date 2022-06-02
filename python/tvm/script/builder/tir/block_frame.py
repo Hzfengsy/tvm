@@ -16,16 +16,15 @@
 # under the License.
 """TVM Script TIR Block Frame"""
 from tvm._ffi import register_object as _register_object
-from .base import TIRFrame
-
 
 from . import _ffi_api
+from .base import TIRFrame
 
 
 @_register_object("script.builder.tir.BlockFrame")
 class BlockFrame(TIRFrame):
-    pass
+    ...
 
 
 def block(name) -> BlockFrame:
-    return _ffi_api.BlockFrame(name)
+    return _ffi_api.BlockFrame(name)  # pylint: disable=no-member # type: ignore

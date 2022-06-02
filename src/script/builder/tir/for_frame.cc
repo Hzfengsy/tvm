@@ -18,6 +18,7 @@
  */
 #include "./for_frame.h"
 
+#include <tvm/arith/analyzer.h>
 #include <tvm/runtime/registry.h>
 
 namespace tvm {
@@ -30,19 +31,21 @@ void ForFrameNode::ExitWithScope() {
   AddToParent(f_make_for_loop(vars, doms, AsStmt(stmts)));
 }
 
-#define TVM_SCRIPT_BUILDER_TIR_FOR_CREATE(Method, Kind)                               \
-  ForFrame Method(PrimExpr min, PrimExpr extent, Map<String, ObjectRef> attrs) {      \
-    using namespace tvm::tir;                                                         \
-    ObjectPtr<ForFrameNode> n = make_object<ForFrameNode>();                          \
-    int bits = std::max(min.dtype().bits(), extent.dtype().bits());                   \
-    n->vars = {Var("v", DataType::Int(bits))};                                        \
-    n->doms = {Range(min, extent)};                                                   \
-    n->f_make_for_loop = [attrs](Array<Var> vars, Array<Range> doms, Stmt body) {     \
-      ICHECK_EQ(vars.size(), 1);                                                      \
-      ICHECK_EQ(doms.size(), 1);                                                      \
-      return For(vars[0], doms[0]->min, doms[0]->extent, Kind, body, NullOpt, attrs); \
-    };                                                                                \
-    return ForFrame(n);                                                               \
+#define TVM_SCRIPT_BUILDER_TIR_FOR_CREATE(Method, Kind)                                     \
+  ForFrame Method(PrimExpr start, PrimExpr stop, Map<String, ObjectRef> annotations) {      \
+    using namespace tvm::tir;                                                               \
+    PrimExpr min = start;                                                                   \
+    PrimExpr extent = arith::Analyzer().Simplify(stop - start);                             \
+    ObjectPtr<ForFrameNode> n = make_object<ForFrameNode>();                                \
+    int bits = std::max(min.dtype().bits(), extent.dtype().bits());                         \
+    n->vars = {Var("v", DataType::Int(bits))};                                              \
+    n->doms = {Range::FromMinExtent(min, extent)};                                          \
+    n->f_make_for_loop = [annotations](Array<Var> vars, Array<Range> doms, Stmt body) {     \
+      ICHECK_EQ(vars.size(), 1);                                                            \
+      ICHECK_EQ(doms.size(), 1);                                                            \
+      return For(vars[0], doms[0]->min, doms[0]->extent, Kind, body, NullOpt, annotations); \
+    };                                                                                      \
+    return ForFrame(n);                                                                     \
   }
 
 TVM_SCRIPT_BUILDER_TIR_FOR_CREATE(Serial, tvm::tir::ForKind::kSerial);
@@ -52,18 +55,21 @@ TVM_SCRIPT_BUILDER_TIR_FOR_CREATE(Unroll, tvm::tir::ForKind::kUnrolled);
 
 #undef TVM_SCRIPT_BUILDER_TIR_FOR_CREATE
 
-ForFrame ThreadBinding(PrimExpr min, PrimExpr extent, String thread, Map<String, ObjectRef> attrs) {
+ForFrame ThreadBinding(PrimExpr start, PrimExpr stop, String thread,
+                       Map<String, ObjectRef> annotations) {
   using namespace tvm::tir;
+  PrimExpr min = start;
+  PrimExpr extent = arith::Analyzer().Simplify(stop - start);
   ObjectPtr<ForFrameNode> n = make_object<ForFrameNode>();
   int bits = std::max(min.dtype().bits(), extent.dtype().bits());
   n->vars = {Var("v", DataType::Int(bits))};
-  n->doms = {Range(min, extent)};
-  n->f_make_for_loop = [attrs, thread](Array<Var> vars, Array<Range> doms, Stmt body) -> For {
+  n->doms = {Range::FromMinExtent(min, extent)};
+  n->f_make_for_loop = [annotations, thread](Array<Var> vars, Array<Range> doms, Stmt body) -> For {
     ICHECK_EQ(vars.size(), 1);
     ICHECK_EQ(doms.size(), 1);
     IterVar iter_var(Range(nullptr), NullValue<Var>(), IterVarType::kThreadIndex, thread);
     return For(vars[0], doms[0]->min, doms[0]->extent, ForKind::kThreadBinding, body, iter_var,
-               attrs);
+               annotations);
   };
   return ForFrame(n);
 }
@@ -93,17 +99,11 @@ ForFrame Grid(Array<PrimExpr> extents) {
 }
 
 TVM_REGISTER_NODE_TYPE(ForFrameNode);
-
 TVM_REGISTER_GLOBAL("script.builder.tir.Serial").set_body_typed(Serial);
-
 TVM_REGISTER_GLOBAL("script.builder.tir.Parallel").set_body_typed(Parallel);
-
 TVM_REGISTER_GLOBAL("script.builder.tir.Vectorized").set_body_typed(Vectorized);
-
 TVM_REGISTER_GLOBAL("script.builder.tir.Unroll").set_body_typed(Unroll);
-
 TVM_REGISTER_GLOBAL("script.builder.tir.ThreadBinding").set_body_typed(ThreadBinding);
-
 TVM_REGISTER_GLOBAL("script.builder.tir.Grid").set_body_typed(Grid);
 
 }  // namespace tir

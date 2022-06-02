@@ -15,26 +15,24 @@
 # specific language governing permissions and limitations
 # under the License.
 """TVM Script TIR Prim Func Frame"""
+from typing import Union
+
 from tvm._ffi import register_object as _register_object
-
-from tvm.tir.expr import Var
 from tvm.tir.buffer import Buffer
-
+from tvm.tir.expr import Var
 
 from . import _ffi_api
 from .base import TIRFrame
 
-from typing import Union
-
 
 @_register_object("script.builder.tir.PrimFuncFrame")
 class PrimFuncFrame(TIRFrame):
-    pass
+    ...
 
 
 def prim_func(name) -> PrimFuncFrame:
-    return _ffi_api.PrimFuncFrame(name)
+    return _ffi_api.PrimFuncFrame(name)  # pylint: disable=no-member # type: ignore
 
 
-def arg(name, arg) -> Union[Var, Buffer]:
-    return _ffi_api.Arg(name, arg)
+def arg(name, obj) -> Union[Var, Buffer]:
+    return _ffi_api.Arg(name, obj)  # pylint: disable=no-member # type: ignore

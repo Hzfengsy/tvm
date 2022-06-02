@@ -35,36 +35,6 @@ namespace tir {
 
 TVM_REGISTER_NODE_TYPE(TIRFrameNode);
 
-void TestPOC() {
-  namespace T = tvm::script::builder::tir;
-  using namespace ::tvm::tir;
-
-  With<Builder> builder;
-  {
-    With<PrimFuncFrame> _{T::PrimFunc_("main")};
-    Buffer A = T::Arg("A", T::Buffer_({128, 128, 128}, DataType::Float(32)));
-    Buffer B = T::Arg("B", T::Buffer_({128, 128, 128}, DataType::Float(32)));
-    {
-      With<ForFrame> _{T::Grid({128, 128, 128})};
-      Var i = Def("i", _()->vars[0]);
-      Var j = Def("j", _()->vars[1]);
-      Var k = Def("k", _()->vars[2]);
-      {
-        With<BlockFrame> _{T::Block_("block")};
-        IterVar vi = Def("vi", T::axis::Spatial(Range(0, 128), i));
-        IterVar vj = Def("vj", T::axis::Spatial(Range(0, 128), j));
-        IterVar vk = Def("vk", T::axis::Reduce(Range(0, 128), k));
-      }
-      LOG(INFO) << "ForFrame:\n" << _()->stmts;
-    }
-    LOG(INFO) << "PrimFuncFrame:\n" << _()->stmts;
-  }
-  PrimFunc func = builder()->Get<PrimFunc>();
-  LOG(INFO) << "func:\n" << AsTVMScript(func);
-}
-
-TVM_REGISTER_GLOBAL("test_poc").set_body_typed(TestPOC);
-
 }  // namespace tir
 }  // namespace builder
 }  // namespace script

@@ -21,8 +21,7 @@ from tvm.script.builder import tir as T
 
 
 def test_builder_basic():
-    b = Builder()
-    with b:
+    with Builder() as b:
         with T.prim_func(name="main"):
             A = T.arg("A", T.Buffer((128, 128, 128), "float32"))
             B = T.arg("B", T.Buffer((128, 128, 128), "float32"))
@@ -33,7 +32,6 @@ def test_builder_basic():
                     vj = def_("vj", T.axis.spatial(128, j))
                     vk = def_("vk", T.axis.reduce(128, k))
     print(b.get().script())
-    tvm._ffi.get_global_func("test_poc")()
 
 
 if __name__ == "__main__":

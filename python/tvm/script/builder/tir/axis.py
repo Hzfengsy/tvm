@@ -16,22 +16,23 @@
 # under the License.
 """TVM Script TIR Axis"""
 
-from . import _ffi_api
 from tvm.ir import Range
 from tvm.tir import IterVar
+
+from . import _ffi_api
 
 
 def spatial(dom, binding, dtype="int32") -> IterVar:
     if not isinstance(dom, Range):
         dom = Range(0, dom)
-    return _ffi_api.AxisSpatial(dom, binding, dtype)
+    return _ffi_api.AxisSpatial(dom, binding, dtype)  # pylint: disable=no-member # type: ignore
 
 
 def reduce(dom, binding, dtype="int32") -> IterVar:
     if not isinstance(dom, Range):
         dom = Range(0, dom)
-    return _ffi_api.AxisReduce(dom, binding, dtype)
+    return _ffi_api.AxisReduce(dom, binding, dtype)  # pylint: disable=no-member # type: ignore
 
 
 def remap(kinds, bindings, dtype="int32") -> IterVar:
-    return _ffi_api.AxisRemap(kinds, bindings, dtype)
+    return _ffi_api.AxisRemap(kinds, bindings, dtype)  # pylint: disable=no-member # type: ignore

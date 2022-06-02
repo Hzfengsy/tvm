@@ -17,17 +17,17 @@
 # pylint: disable=unused-import
 """Namespace for the TVMScript TIR Builder API."""
 
+from . import axis
 from .base import TIRFrame
+from .block_frame import block
 from .for_frame import (
     ForFrame,
-    serial,
-    parallel,
-    vectorized,
-    unroll,
-    thread_binding,
     grid,
+    parallel,
+    serial,
+    thread_binding,
+    unroll,
+    vectorized,
 )
-from .prim_func_frame import prim_func, arg
-from .block_frame import block
+from .prim_func_frame import arg, prim_func
 from .var import Buffer
-from . import axis

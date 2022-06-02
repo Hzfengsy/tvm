@@ -15,12 +15,15 @@
 # specific language governing permissions and limitations
 # under the License.
 """TVM Script TIR Buffer"""
-from tvm._ffi import register_object as _register_object
-
-from tvm.tir.buffer import Buffer
+from tvm import tir
 
 from . import _ffi_api
 
 
-def Buffer(shape, dtype, name="buffer", storage_scope="") -> Buffer:
-    return _ffi_api.Buffer(shape, dtype, name, storage_scope)
+def Buffer( # pylint: disable=invalid-name
+    shape,
+    dtype,
+    name="buffer",
+    storage_scope="",
+) -> tir.Buffer:
+    return _ffi_api.Buffer(shape, dtype, name, storage_scope) # pylint: disable=no-member # type: ignore

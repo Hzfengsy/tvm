@@ -17,10 +17,9 @@
 """TVM Script TIR Frame"""
 from tvm._ffi import register_object as _register_object
 
-from . import _ffi_api
 from ..frame import Frame
 
 
 @_register_object("script.builder.tir.TIRFrame")
 class TIRFrame(Frame):
-    pass
+    ...

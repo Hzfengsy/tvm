@@ -16,7 +16,6 @@
 # under the License.
 """TVM Script Frames"""
 from tvm._ffi import register_object as _register_object
-
 from tvm.runtime import Object
 
 from . import _ffi_api
@@ -25,14 +24,16 @@ from . import _ffi_api
 @_register_object("script.builder.Frame")
 class Frame(Object):
     def __enter__(self) -> "Frame":
-        _ffi_api.FrameEnter(self)
+        _ffi_api.FrameEnter(self)  # pylint: disable=no-member # type: ignore
         return self
 
-    def __exit__(self, ptype, value, trace) -> None:
-        _ffi_api.FrameExit(self)
+    def __exit__(self, ptype, value, trace) -> None:  # pylint: disable=unused-argument
+        _ffi_api.FrameExit(self)  # pylint: disable=no-member # type: ignore
 
 
 @_register_object("script.builder.IRModuleFrame")
 class IRModuleFrame(Frame):
     def __init__(self) -> None:
-        self.__init_handle_by_constructor__(_ffi_api.IRModuleFrame)
+        self.__init_handle_by_constructor__(
+            _ffi_api.IRModuleFrame  # pylint: disable=no-member # type: ignore
+        )

@@ -17,4 +17,4 @@
 """FFI APIs for tvm.script.builder.tir"""
 import tvm._ffi
 
-tvm._ffi._init_api("script.builder.tir", __name__) # pylint: disable=protected-access
+tvm._ffi._init_api("script.builder.tir", __name__)  # pylint: disable=protected-access

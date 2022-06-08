@@ -20,10 +20,12 @@ from tvm import tir
 from . import _ffi_api
 
 
-def Buffer( # pylint: disable=invalid-name
+def Buffer(  # pylint: disable=invalid-name
     shape,
     dtype,
     name="buffer",
     storage_scope="",
 ) -> tir.Buffer:
-    return _ffi_api.Buffer(shape, dtype, name, storage_scope) # pylint: disable=no-member # type: ignore
+    return _ffi_api.Buffer(
+        shape, dtype, name, storage_scope
+    )  # pylint: disable=no-member # type: ignore

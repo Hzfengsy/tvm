@@ -31,3 +31,4 @@ from .for_frame import (
 )
 from .prim_func_frame import arg, prim_func
 from .var import Buffer
+from .op import *

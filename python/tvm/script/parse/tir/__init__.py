@@ -14,7 +14,4 @@
 # KIND, either express or implied.  See the License for the
 # specific language governing permissions and limitations
 # under the License.
-# pylint: disable=unused-import
-"""Namespace for the TVMScript Builder API."""
-from .builder import Builder, def_, def_many
-from .frame import Frame, IRModuleFrame
+from . import tir

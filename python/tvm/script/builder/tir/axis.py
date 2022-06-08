@@ -36,3 +36,7 @@ def reduce(dom, binding, dtype="int32") -> IterVar:
 
 def remap(kinds, bindings, dtype="int32") -> IterVar:
     return _ffi_api.AxisRemap(kinds, bindings, dtype)  # pylint: disable=no-member # type: ignore
+
+
+S = spatial
+R = reduce

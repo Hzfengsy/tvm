@@ -21,6 +21,7 @@ from tvm._ffi import register_object as _register_object
 from tvm.tir.buffer import Buffer
 from tvm.tir.expr import Var
 
+from ..builder import Builder
 from . import _ffi_api
 from .base import TIRFrame
 
@@ -36,3 +37,6 @@ def prim_func(name) -> PrimFuncFrame:
 
 def arg(name, obj) -> Union[Var, Buffer]:
     return _ffi_api.Arg(name, obj)  # pylint: disable=no-member # type: ignore
+
+
+setattr(prim_func, "dispatch_token", "tir")

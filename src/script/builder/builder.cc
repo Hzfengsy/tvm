@@ -18,6 +18,7 @@
  */
 #include "./builder.h"
 
+#include <tvm/runtime/container/array.h>
 #include <tvm/runtime/registry.h>
 
 namespace tvm {
@@ -70,6 +71,17 @@ void Namer::Name(ObjectRef node, String name) {
                               << node->GetTypeKey();
   f(node, name);
 }
+
+TVM_STATIC_IR_FUNCTOR(Namer, vtable)
+    .set_dispatch<tvm::runtime::ArrayNode>([](const ObjectRef& node, String name) -> void {
+      using namespace tvm::runtime;
+      ArrayNode* array = const_cast<ArrayNode*>(node.as<ArrayNode>());
+      ICHECK(array);
+      int n = array->size();
+      for (int i = 0; i < n; ++i) {
+        Namer::Name(array->at(i), name + std::to_string(i));
+      }
+    });
 
 namespace details {
 

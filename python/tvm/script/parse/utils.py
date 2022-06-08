@@ -14,7 +14,16 @@
 # KIND, either express or implied.  See the License for the
 # specific language governing permissions and limitations
 # under the License.
-# pylint: disable=unused-import
-"""Namespace for the TVMScript Builder API."""
-from .builder import Builder, def_, def_many
-from .frame import Frame, IRModuleFrame
+from contextlib import contextmanager
+from typing import Callable
+
+
+def deferred(f: Callable[[], None]):
+    @contextmanager
+    def context():
+        try:
+            yield
+        finally:
+            f()
+
+    return context()

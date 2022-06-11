@@ -26,9 +26,9 @@ namespace script {
 namespace builder {
 namespace tir {
 
-tvm::tir::Buffer Buffer_(Array<PrimExpr> shape,   //
-                         DataType dtype,          //
-                         String name = "buffer",  //
+tvm::tir::Buffer Buffer_(Array<PrimExpr> shape,                 //
+                         DataType dtype = DataType::Float(32),  //
+                         String name = "buffer",                //
                          String storage_scope = "");
 
 }

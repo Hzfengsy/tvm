@@ -48,6 +48,8 @@ PrimExpr bool_(PrimExpr expr) { return cast(DataType::Bool(), expr); }
 
 PrimExpr prim_type(String type_name, PrimExpr expr);
 
+tvm::tir::Var handle() { return tvm::tir::Var("", DataType::Handle()); }
+
 using tvm::cast;
 using tvm::if_then_else;
 using tvm::infinity;

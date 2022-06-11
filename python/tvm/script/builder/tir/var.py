@@ -22,7 +22,7 @@ from . import _ffi_api
 
 def Buffer(  # pylint: disable=invalid-name
     shape,
-    dtype,
+    dtype="float32",
     name="buffer",
     storage_scope="",
 ) -> tir.Buffer:

@@ -28,6 +28,7 @@ PrimExpr prim_type(String type_name, PrimExpr expr) {
 }
 
 TVM_REGISTER_GLOBAL("script.builder.tir.PrimType").set_body_typed(prim_type);
+TVM_REGISTER_GLOBAL("script.builder.tir.Handle").set_body_typed(handle);
 TVM_REGISTER_GLOBAL("script.builder.tir.min").set_body_typed([](PrimExpr a, PrimExpr b, Span span) {
   return tvm::min(a, b, span);
 });

@@ -15,11 +15,12 @@
 # specific language governing permissions and limitations
 # under the License.
 """TVM Script TIR Prim Func Frame"""
-from typing import Union
+from typing import Union, Dict, Any
 
 from tvm._ffi import register_object as _register_object
 from tvm.tir.buffer import Buffer
 from tvm.tir.expr import Var
+from tvm.ir import Type
 
 from ..builder import Builder
 from . import _ffi_api
@@ -40,3 +41,71 @@ def arg(name, obj) -> Union[Var, Buffer]:
 
 
 setattr(prim_func, "dispatch_token", "tir")
+
+
+def func_attr(attrs: Dict[str, Any]) -> None:
+    return _ffi_api.FuncAttrs(attrs)  # pylint: disable=no-member # type: ignore
+
+
+def func_ret(ret_type) -> Type:
+    return _ffi_api.FuncRet(ret_type)  # pylint: disable=no-member # type: ignore
+
+
+def match_buffer(
+    param,
+    shape,
+    dtype="float32",
+    data=None,
+    strides=[],
+    elem_offset=None,
+    storage_scope="",
+    align=-1,
+    offset_factor=0,
+    buffer_type="default",
+    axis_separators=None,
+    span=None,
+) -> Buffer:
+    return _ffi_api.MatchBuffer(
+        param,
+        shape,
+        dtype,
+        data,
+        strides,
+        elem_offset,
+        storage_scope,
+        align,
+        offset_factor,
+        buffer_type,
+        axis_separators,
+        span,
+    )
+
+
+def preflattened_buffer(
+    postflattened,
+    shape,
+    dtype="float32",
+    data=None,
+    strides=[],
+    elem_offset=None,
+    storage_scope="",
+    align=-1,
+    offset_factor=0,
+    buffer_type="default",
+    axis_separators=None,
+    span=None,
+) -> None:
+    _ffi_api.PreflattenedBuffer(
+        postflattened,
+        shape,
+        dtype,
+        data,
+        strides,
+        elem_offset,
+        storage_scope,
+        align,
+        offset_factor,
+        buffer_type,
+        axis_separators,
+        span,
+    )

@@ -29,6 +29,6 @@ from .for_frame import (
     unroll,
     vectorized,
 )
-from .prim_func_frame import arg, prim_func
+from .prim_func_frame import arg, func_attr, func_ret, prim_func, match_buffer, preflattened_buffer
 from .var import Buffer
 from .op import *

@@ -15,14 +15,13 @@
 # specific language governing permissions and limitations
 # under the License.
 """TVM Script TIR Prim Func Frame"""
-from typing import Union, Dict, Any
+from typing import Any, Callable, Dict, Optional, Union
 
 from tvm._ffi import register_object as _register_object
+from tvm.ir import Type
 from tvm.tir.buffer import Buffer
 from tvm.tir.expr import Var
-from tvm.ir import Type
 
-from ..builder import Builder
 from . import _ffi_api
 from .base import TIRFrame
 
@@ -32,15 +31,23 @@ class PrimFuncFrame(TIRFrame):
     ...
 
 
-def prim_func(name) -> PrimFuncFrame:
-    return _ffi_api.PrimFuncFrame(name)  # pylint: disable=no-member # type: ignore
+def prim_func(f: Optional[Callable] = None) -> PrimFuncFrame:
+    if f is not None:
+        from tvm.script.parse import parse  # pylint: disable=import-outside-toplevel
+
+        return parse(f)
+    return _ffi_api.PrimFuncFrame()  # pylint: disable=no-member # type: ignore
+
+
+setattr(prim_func, "dispatch_token", "tir")
 
 
 def arg(name, obj) -> Union[Var, Buffer]:
     return _ffi_api.Arg(name, obj)  # pylint: disable=no-member # type: ignore
 
 
-setattr(prim_func, "dispatch_token", "tir")
+def func_name(name) -> str:
+    return _ffi_api.FuncName(name)  # pylint: disable=no-member # type: ignore
 
 
 def func_attr(attrs: Dict[str, Any]) -> None:
@@ -65,7 +72,7 @@ def match_buffer(
     axis_separators=None,
     span=None,
 ) -> Buffer:
-    return _ffi_api.MatchBuffer(
+    return _ffi_api.MatchBuffer(  # pylint: disable=no-member # type: ignore
         param,
         shape,
         dtype,
@@ -95,7 +102,7 @@ def preflattened_buffer(
     axis_separators=None,
     span=None,
 ) -> None:
-    _ffi_api.PreflattenedBuffer(
+    _ffi_api.PreflattenedBuffer(  # pylint: disable=no-member # type: ignore
         postflattened,
         shape,
         dtype,

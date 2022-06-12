@@ -57,9 +57,10 @@ class PrimFuncFrame : public TIRFrame {
   TVM_DEFINE_MUTABLE_NOTNULLABLE_OBJECT_REF_METHODS(PrimFuncFrame, TIRFrame, PrimFuncFrameNode);
 };
 
-PrimFuncFrame PrimFunc_(String name);
+PrimFuncFrame PrimFunc_();
 tvm::tir::Var Arg(String name, tvm::tir::Var var);
 tvm::tir::Buffer Arg(String name, tvm::tir::Buffer buffer);
+void FuncName(String name);
 void FuncAttrs(Map<String, ObjectRef> attrs);
 tvm::Type FuncRet(tvm::Type ret_type);
 

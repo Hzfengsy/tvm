@@ -40,7 +40,6 @@ class SourceCode:
         else:
             self.source_name = inspect.getsourcefile(program)  # type: ignore
             lines, self.start_line = inspect.getsourcelines(program)  # type: ignore
-
             if lines:
                 self.start_column = len(lines[0]) - len(lines[0].lstrip())
             else:
@@ -48,7 +47,7 @@ class SourceCode:
             if self.start_column and lines:
                 self.source = "\n".join([l[self.start_column :].rstrip() for l in lines])
             else:
-                self.source = ""
+                self.source = "".join(lines)
             try:
                 # It will cause a problem when running in Jupyter Notebook.
                 # `mod` will be <module '__main__'>, which is a built-in module
@@ -69,16 +68,16 @@ class SourceCode:
         return doc.parse(self.source)
 
 
-def parse(
-    program: Union[doc.AST, Any, str],
-    extra_vars: Optional[Dict[str, Any]] = None,
-):
+def parse(program: Union[doc.AST, Any, str]):
+    # TODO: `extra_vars` is a hack
+    from tvm.script.builder import tir as T
+
+    extra_vars = {"T": T}
     program_ast = SourceCode(program).as_ast()
     parser = Parser()
     with Builder() as builder:
         with parser.var_table.with_frame():
-            if extra_vars:
-                for k, v in extra_vars.items():
-                    parser.var_table.add(k, v)
+            for k, v in extra_vars.items():
+                parser.var_table.add(k, v)
             parser.visit(program_ast)
     return builder.get()

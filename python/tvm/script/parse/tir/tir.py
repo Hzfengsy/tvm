@@ -70,7 +70,8 @@ def visit_with(self: Parser, node: doc.With) -> None:
 def visit_function_def(self: Parser, node: doc.FunctionDef) -> None:
     with self.var_table.with_frame():
         self.var_table.add("range", T.serial)
-        with T.prim_func(node.name):
+        with T.prim_func():
+            T.func_name(node.name)
             with self.with_dispatch_token("tir"):
                 # TODO: define the GlobalVar, handle the return value
                 self.visit(node.args)

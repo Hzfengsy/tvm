@@ -50,9 +50,9 @@ void PrimFuncFrameNode::ExitWithScope() {
   }
 }
 
-PrimFuncFrame PrimFunc_(String name) {
+PrimFuncFrame PrimFunc_() {
   ObjectPtr<PrimFuncFrameNode> n = make_object<PrimFuncFrameNode>();
-  n->name = name;
+  n->name = "";
   n->args.clear();
   n->ret_type = TupleType::Empty();
   n->buffer_map.clear();
@@ -76,6 +76,11 @@ tvm::tir::Buffer Arg(String name, tvm::tir::Buffer buffer) {
   frame->args.push_back(handle);
   frame->buffer_map.Set(handle, buffer);
   return buffer;
+}
+
+void FuncName(String name) {
+  PrimFuncFrame frame = Builder::Current()->FindFrame<PrimFuncFrame>().value();
+  frame->name = name;
 }
 
 void FuncAttrs(Map<String, ObjectRef> attrs) {
@@ -165,6 +170,7 @@ TVM_REGISTER_GLOBAL("script.builder.tir.Arg")
       LOG(FATAL) << "ValueError: Unexpected type for TIR Arg.";
       throw;
     });
+TVM_REGISTER_GLOBAL("script.builder.tir.FuncName").set_body_typed(FuncName);
 TVM_REGISTER_GLOBAL("script.builder.tir.FuncAttrs").set_body_typed(FuncAttrs);
 TVM_REGISTER_GLOBAL("script.builder.tir.FuncRet").set_body_typed(FuncRet);
 TVM_REGISTER_GLOBAL("script.builder.tir.MatchBuffer").set_body_typed(MatchBuffer);

@@ -18,11 +18,14 @@
 import ast
 from typing import Any, Dict, Optional, Union
 
+from . import doc
+
 
 def eval_expr(
-    node: Union[ast.expr, ast.Expression],
+    node: Union[doc.expr, doc.Expression],
     dict_globals: Optional[Dict[str, Any]],
 ) -> Any:
+    node = doc.from_doc(node)
     if isinstance(node, ast.expr):
         node = ast.Expression(body=node)
     assert isinstance(node, ast.Expression)
@@ -34,9 +37,10 @@ def eval_expr(
 
 
 def eval_assign(
-    target: ast.expr,
+    target: doc.expr,
     source: Any,
 ) -> Dict[str, Any]:
+    target = doc.from_doc(target)
     assert isinstance(target, ast.expr)
     RHS_VAR_NAME = "__tvm_rhs_var__"  # pylint: disable=invalid-name
     rhs_var_name = RHS_VAR_NAME

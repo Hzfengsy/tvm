@@ -16,15 +16,16 @@
 # under the License.
 """The dispatcher"""
 
-import ast
 from typing import TYPE_CHECKING, Callable, Dict, Optional, Tuple
+
+from .doc import AST
 
 if TYPE_CHECKING:
     from .parser import Parser
 
 
 ParseMethod = Callable[
-    ["Parser", ast.AST],
+    ["Parser", AST],
     None,
 ]
 

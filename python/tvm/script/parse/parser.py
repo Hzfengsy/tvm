@@ -15,11 +15,10 @@
 # specific language governing permissions and limitations
 # under the License.
 """The core parser"""
-import ast
 from typing import Any, Dict, List, Optional, Union
 
 from ..builder import def_
-from . import dispatch
+from . import dispatch, doc
 from .evaluator import eval_assign, eval_expr
 from .utils import deferred
 from .var_table import VarTable
@@ -33,7 +32,7 @@ def _dispatch(self: "Parser", type_name: str) -> dispatch.ParseMethod:
     return lambda self, node: self.generic_visit(node)
 
 
-def _handle_function(self: "Parser", node: ast.FunctionDef) -> None:
+def _handle_function(self: "Parser", node: doc.FunctionDef) -> None:
     if not node.decorator_list:
         self.report_error(node, "Function must be decorated")
     # TODO: only the last decorator is parsed
@@ -47,7 +46,7 @@ def _handle_function(self: "Parser", node: ast.FunctionDef) -> None:
     self.report_error(node, "The parser does not understand the decorator")
 
 
-class Parser(ast.NodeVisitor):
+class Parser(doc.NodeVisitor):
     """The TVMScript parser"""
 
     dispatch_tokens: List[str]
@@ -66,7 +65,7 @@ class Parser(ast.NodeVisitor):
 
     def eval_expr(
         self,
-        node: Union[ast.Expression, ast.expr],
+        node: Union[doc.Expression, doc.expr],
         extra_vars: Optional[Dict[str, Any]] = None,
     ) -> Any:
         var_values = self.var_table.get()
@@ -77,7 +76,7 @@ class Parser(ast.NodeVisitor):
 
     def eval_assign(
         self,
-        target: ast.expr,
+        target: doc.expr,
         source: Any,
     ) -> Dict[str, Any]:
         var_values = eval_assign(target, source)
@@ -86,24 +85,24 @@ class Parser(ast.NodeVisitor):
             self.var_table.add(k, v)
         return var_values
 
-    def report_error(self, node: ast.AST, msg: str) -> None:  # pylint: disable=no-self-use
+    def report_error(self, node: doc.AST, msg: str) -> None:  # pylint: disable=no-self-use
         raise SyntaxError(f"At {node.lineno}:{node.col_offset}: {msg}")
 
-    def visit_FunctionDef(self, node: ast.FunctionDef) -> Any:  # pylint: disable=invalid-name
+    def visit_FunctionDef(self, node: doc.FunctionDef) -> Any:  # pylint: disable=invalid-name
         _handle_function(self, node)
 
-    def visit_body(self, node: List[ast.stmt]) -> Any:
+    def visit_body(self, node: List[doc.stmt]) -> Any:
         for stmt in node:
             self.visit(stmt)
 
-    def visit_arguments(self, node: ast.arguments) -> Any:
+    def visit_arguments(self, node: doc.arguments) -> Any:
         _dispatch(self, "arguments")(self, node)
 
-    def visit_For(self, node: ast.For) -> Any:  # pylint: disable=invalid-name
+    def visit_For(self, node: doc.For) -> Any:  # pylint: disable=invalid-name
         _dispatch(self, "For")(self, node)
 
-    def visit_With(self, node: ast.With) -> Any:  # pylint: disable=invalid-name
+    def visit_With(self, node: doc.With) -> Any:  # pylint: disable=invalid-name
         _dispatch(self, "With")(self, node)
 
-    def visit_Assign(self, node: ast.Assign) -> Any:  # pylint: disable=invalid-name
+    def visit_Assign(self, node: doc.Assign) -> Any:  # pylint: disable=invalid-name
         _dispatch(self, "Assign")(self, node)

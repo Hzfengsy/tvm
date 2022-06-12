@@ -15,17 +15,16 @@
 # specific language governing permissions and limitations
 # under the License.
 
-import ast
 import contextlib
 
 from ...builder import Frame
 from ...builder import tir as T
-from .. import dispatch
+from .. import dispatch, doc
 from ..parser import Parser
 
 
 @dispatch.register(token="tir", type_name="For")
-def visit_for(self: Parser, node: ast.For) -> None:
+def visit_for(self: Parser, node: doc.For) -> None:
     for_frame = self.eval_expr(node.iter)
     if not isinstance(for_frame, T.ForFrame):
         self.report_error(
@@ -40,7 +39,7 @@ def visit_for(self: Parser, node: ast.For) -> None:
 
 
 @dispatch.register(token="tir", type_name="Assign")
-def visit_assign(self: Parser, node: ast.Assign) -> None:
+def visit_assign(self: Parser, node: doc.Assign) -> None:
     if len(node.targets) != 1:
         self.report_error(node, "Consequential assignments like 'a = b = c' are not supported.")
     lhs = node.targets[0]
@@ -49,7 +48,7 @@ def visit_assign(self: Parser, node: ast.Assign) -> None:
 
 
 @dispatch.register(token="tir", type_name="With")
-def visit_with(self: Parser, node: ast.With) -> None:
+def visit_with(self: Parser, node: doc.With) -> None:
     with contextlib.ExitStack() as stack:
         stack.enter_context(self.var_table.with_frame())
         for item in node.items:
@@ -68,7 +67,7 @@ def visit_with(self: Parser, node: ast.With) -> None:
 
 
 @dispatch.register(token="tir", type_name="FunctionDef")
-def visit_function_def(self: Parser, node: ast.FunctionDef) -> None:
+def visit_function_def(self: Parser, node: doc.FunctionDef) -> None:
     with self.var_table.with_frame():
         self.var_table.add("range", T.serial)
         with T.prim_func(node.name):
@@ -79,7 +78,7 @@ def visit_function_def(self: Parser, node: ast.FunctionDef) -> None:
 
 
 @dispatch.register(token="tir", type_name="arguments")
-def visit_arguments(self: Parser, node: ast.arguments) -> None:
+def visit_arguments(self: Parser, node: doc.arguments) -> None:
     # TODO: handle different types of arguments:
     # - vararg: arg | None
     # - kwonlyargs: list[arg]

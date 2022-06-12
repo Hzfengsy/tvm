@@ -15,5 +15,5 @@
 # specific language governing permissions and limitations
 # under the Licens.
 """The parser"""
-from . import dispatch, parser, tir
+from . import dispatch, doc, parser, tir
 from .entry import parse

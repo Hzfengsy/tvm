@@ -15,11 +15,11 @@
 # specific language governing permissions and limitations
 # under the License.
 """The entry point of TVM parser."""
-import ast
 import inspect
 from typing import Any, Dict, Optional, Union
 
 from ..builder import Builder
+from . import doc
 from .parser import Parser
 
 
@@ -30,7 +30,7 @@ class SourceCode:
     source: str
     full_source: str
 
-    def __init__(self, program: Union[str, ast.AST]):
+    def __init__(self, program: Union[str, doc.AST]):
         if isinstance(program, str):
             self.source_name = "<str>"
             self.start_line = 1
@@ -65,12 +65,12 @@ class SourceCode:
                 src, _ = inspect.findsource(program)  # type: ignore
                 self.full_source = "".join(src)
 
-    def as_ast(self) -> ast.AST:
-        return ast.parse(self.source)
+    def as_ast(self) -> doc.AST:
+        return doc.parse(self.source)
 
 
 def parse(
-    program: Union[ast.AST, Any, str],
+    program: Union[doc.AST, Any, str],
     extra_vars: Optional[Dict[str, Any]] = None,
 ):
     program_ast = SourceCode(program).as_ast()

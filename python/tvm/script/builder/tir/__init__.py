@@ -19,7 +19,7 @@
 
 from . import axis
 from .base import TIRFrame
-from .block_frame import block
+from .block_frame import block, where, reads, writes, alloc_buffer, block_attr, init
 from .for_frame import (
     ForFrame,
     grid,

@@ -39,6 +39,7 @@ class BlockFrameNode : public TIRFrameNode {
 
   Array<PrimExpr> iter_values;
   Optional<PrimExpr> predicate;
+  bool no_realize;
 
   void VisitAttrs(tvm::AttrVisitor* v) {
     TIRFrameNode::VisitAttrs(v);
@@ -52,6 +53,7 @@ class BlockFrameNode : public TIRFrameNode {
     v->Visit("annotations", &annotations);
     v->Visit("iter_values", &iter_values);
     v->Visit("predicate", &predicate);
+    v->Visit("no_realize", &no_realize);
   }
 
   static constexpr const char* _type_key = "script.builder.tir.BlockFrame";
@@ -66,11 +68,43 @@ class BlockFrame : public TIRFrame {
   TVM_DEFINE_MUTABLE_NOTNULLABLE_OBJECT_REF_METHODS(BlockFrame, TIRFrame, BlockFrameNode);
 };
 
-BlockFrame Block_(String name);
+BlockFrame Block_(String name, bool no_realize = false);
+
+class BlockInitFrameNode : public TIRFrameNode {
+ public:
+  void VisitAttrs(tvm::AttrVisitor* v) { TIRFrameNode::VisitAttrs(v); }
+
+  static constexpr const char* _type_key = "script.builder.tir.BlockInitFrame";
+  TVM_DECLARE_FINAL_OBJECT_INFO(BlockInitFrameNode, TIRFrameNode);
+
+ public:
+  void EnterWithScope() final;
+  void ExitWithScope() final;
+};
+
+class BlockInitFrame : public TIRFrame {
+ public:
+  TVM_DEFINE_MUTABLE_NOTNULLABLE_OBJECT_REF_METHODS(BlockInitFrame, TIRFrame, BlockInitFrameNode);
+};
+
+BlockInitFrame Init();
+BlockFrame FindBlockFrame(const String& method);
+void Where(PrimExpr predicate);
+void Reads(Array<ObjectRef> buffer_slices);
+void Writes(Array<ObjectRef> buffer_slices);
+void BlockAttrs(Map<String, ObjectRef> attrs);
+tvm::tir::Buffer AllocBuffer(Array<PrimExpr> shape, DataType dtype = DataType::Float(32),
+                             Optional<tvm::tir::Var> data = NullOpt, Array<PrimExpr> strides = {},
+                             PrimExpr elem_offset = PrimExpr(), String storage_scope = "",
+                             int align = -1, int offset_factor = 0,
+                             String buffer_type_str = "default", Array<IntImm> axis_separators = {},
+                             Span span = Span());
 
 namespace axis {
 tvm::tir::IterVar Spatial(Range dom, PrimExpr binding, DataType dtype = DataType::Int(32));
 tvm::tir::IterVar Reduce(Range dom, PrimExpr binding, DataType dtype = DataType::Int(32));
+tvm::tir::IterVar Scan(Range dom, PrimExpr binding, DataType dtype = DataType::Int(32));
+tvm::tir::IterVar Opaque(Range dom, PrimExpr binding, DataType dtype = DataType::Int(32));
 Array<tvm::tir::IterVar> Remap(String kinds, Array<PrimExpr> bindings,
                                DataType dtype = DataType::Int(32));
 }  // namespace axis

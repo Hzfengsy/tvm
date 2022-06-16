@@ -32,23 +32,23 @@ class ForFrame(TIRFrame):
         return self.vars
 
 
-def serial(start, stop, annotations) -> ForFrame:
+def serial(start, stop, annotations=None) -> ForFrame:
     return _ffi_api.Serial(start, stop, annotations)  # pylint: disable=no-member # type: ignore
 
 
-def parallel(start, stop, annotations) -> ForFrame:
+def parallel(start, stop, annotations=None) -> ForFrame:
     return _ffi_api.Parallel(start, stop, annotations)  # pylint: disable=no-member # type: ignore
 
 
-def vectorized(start, stop, annotations) -> ForFrame:
+def vectorized(start, stop, annotations=None) -> ForFrame:
     return _ffi_api.Vectorized(start, stop, annotations)  # pylint: disable=no-member # type: ignore
 
 
-def unroll(start, stop, annotations) -> ForFrame:
+def unroll(start, stop, annotations=None) -> ForFrame:
     return _ffi_api.Unroll(start, stop, annotations)  # pylint: disable=no-member # type: ignore
 
 
-def thread_binding(start, stop, thread, annotations) -> ForFrame:
+def thread_binding(start, stop, thread, annotations=None) -> ForFrame:
     return _ffi_api.ThreadBinding(  # pylint: disable=no-member # type: ignore
         start, stop, thread, annotations
     )

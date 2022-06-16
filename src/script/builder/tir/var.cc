@@ -27,6 +27,27 @@ tvm::tir::Buffer Buffer_(Array<PrimExpr> shape, DataType dtype, String name, Str
   return tvm::tir::decl_buffer(shape, dtype, name, storage_scope);
 }
 
+tvm::tir::Buffer DeclBuffer(Array<PrimExpr> shape, DataType dtype, String buffer_name,
+                            Optional<tvm::tir::Var> data, Array<PrimExpr> strides,
+                            PrimExpr elem_offset, String storage_scope, int align,
+                            int offset_factor, String buffer_type_str,
+                            Array<IntImm> axis_separators, Span span) {
+  using namespace tvm::tir;
+  Var buffer_data;
+  if (!data.defined()) {
+    DataType storage_dtype = dtype;
+    if (storage_dtype == DataType::Bool()) {
+      storage_dtype = DataType::Int(8);
+    }
+    buffer_data = Var(buffer_name, PointerType(PrimType(storage_dtype), storage_scope), span);
+  } else {
+    buffer_data = data.value();
+  }
+  BufferType buffer_type = (buffer_type_str == "auto_broadcast") ? kAutoBroadcast : kDefault;
+  return Buffer(buffer_data, dtype, shape, strides, elem_offset, buffer_name, align, offset_factor,
+                buffer_type, axis_separators, span);
+}
+
 TVM_STATIC_IR_FUNCTOR(Namer, vtable)
     .set_dispatch<tvm::tir::BufferNode>([](const ObjectRef& node, String name) -> void {
       using namespace tvm::tir;

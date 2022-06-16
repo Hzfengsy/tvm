@@ -43,6 +43,8 @@ class BuilderNode : public runtime::Object {
  public:
   template <typename TFrame>
   inline Optional<TFrame> FindFrame() const;
+  template <typename TFrame>
+  inline Optional<TFrame> GetLastFrame() const;
 
   template <typename TObjectRef>
   inline TObjectRef Get() const;
@@ -86,6 +88,15 @@ inline Optional<TFrame> BuilderNode::FindFrame() const {
     if (const TFrameNode* p = (*it).template as<TFrameNode>()) {
       return GetRef<TFrame>(p);
     }
+  }
+  return NullOpt;
+}
+
+template <typename TFrame>
+inline Optional<TFrame> BuilderNode::GetLastFrame() const {
+  using TFrameNode = typename TFrame::ContainerType;
+  if (!frames.empty() && frames.back()->IsInstance<TFrameNode>()) {
+    return Downcast<TFrame>(frames.back());
   }
   return NullOpt;
 }

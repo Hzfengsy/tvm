@@ -16,30 +16,29 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-#ifndef TVM_SCRIPT_BUILDER_TIR_VAR_H_
-#define TVM_SCRIPT_BUILDER_TIR_VAR_H_
+#ifndef TVM_SCRIPT_BUILDER_TIR_UTILS_H_
+#define TVM_SCRIPT_BUILDER_TIR_UTILS_H_
 
-#include "./base.h"
+#include <tvm/tir/expr.h>
+#include <tvm/tir/stmt.h>
 
 namespace tvm {
 namespace script {
 namespace builder {
 namespace tir {
 
-tvm::tir::Buffer Buffer_(Array<PrimExpr> shape,                 //
-                         DataType dtype = DataType::Float(32),  //
-                         String name = "buffer",                //
-                         String storage_scope = "");
-
-tvm::tir::Buffer DeclBuffer(Array<PrimExpr> shape, DataType dtype, String buffer_name,
-                            Optional<tvm::tir::Var> data, Array<PrimExpr> strides,
-                            PrimExpr elem_offset, String storage_scope, int align,
-                            int offset_factor, String buffer_type_str,
-                            Array<IntImm> axis_separators, Span span);
+tvm::tir::BufferRegion BufferRegionFromLoad(tvm::tir::BufferLoad buffer_load) {
+  using namespace tvm::tir;
+  Array<Range> ranges;
+  for (const PrimExpr& index : buffer_load->indices) {
+    ranges.push_back(Range::FromMinExtent(index, 1));
+  }
+  return BufferRegion(buffer_load->buffer, ranges);
+}
 
 }  // namespace tir
 }  // namespace builder
 }  // namespace script
 }  // namespace tvm
 
-#endif  // TVM_SCRIPT_BUILDER_TIR_VAR_H_
+#endif  // TVM_SCRIPT_BUILDER_TIR_UTILS_H_

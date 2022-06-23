@@ -40,3 +40,20 @@ from .prim_func_frame import (
     prim_func,
 )
 from .var import Buffer
+from .stmt import (
+    Assert,
+    let,
+    allocate,
+    allocate_const,
+    launch_thread,
+    realize,
+    attr,
+    while_,
+    if_,
+    then_,
+    else_,
+    env_thread,
+    buffer_store,
+    prefetch,
+    evaluate,
+)

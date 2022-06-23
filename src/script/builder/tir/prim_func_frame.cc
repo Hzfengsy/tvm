@@ -116,7 +116,7 @@ tvm::tir::Buffer Arg(String name, tvm::tir::Buffer buffer) {
 void FuncName(String name) {
   PrimFuncFrame frame = FindPrimFuncFrame("T.func_name");
   if (frame->name.defined()) {
-    LOG(FATAL) << "Duplicate prim func name, previous one is " << frame->name.value();
+    LOG(FATAL) << "ValueError: Duplicate prim func name, previous one is " << frame->name.value();
   }
   frame->name = name;
 }
@@ -125,7 +125,7 @@ void FuncAttrs(Map<String, ObjectRef> attrs) {
   using namespace tvm::tir;
   PrimFuncFrame frame = FindPrimFuncFrame("T.func_attr");
   if (!frame->attrs.empty()) {
-    LOG(FATAL) << "Duplicate prim func annotations, previous one is " << frame->attrs;
+    LOG(FATAL) << "ValueError: Duplicate prim func annotations, previous one is " << frame->attrs;
   }
   frame->attrs = attrs;
 }
@@ -133,7 +133,8 @@ void FuncAttrs(Map<String, ObjectRef> attrs) {
 tvm::Type FuncRet(tvm::Type ret_type) {
   PrimFuncFrame frame = FindPrimFuncFrame("T.ret_type");
   if (frame->ret_type.defined()) {
-    LOG(FATAL) << "Duplicate prim func return type, previous one is " << frame->ret_type.value();
+    LOG(FATAL) << "ValueError: Duplicate prim func return type, previous one is "
+               << frame->ret_type.value();
   }
   frame->ret_type = ret_type;
   return ret_type;

@@ -52,7 +52,8 @@ void BlockFrameNode::ExitWithScope() {
   Block block = Block(iter_vars, reads, writes, name, AsStmt(stmts), init, alloc_buffers,
                       match_buffers, annotations);
   if (no_realize) {
-    CHECK(iter_values.empty()) << "ValueError: Block bindings are not allowed when `no_realize=True`";
+    CHECK(iter_values.empty())
+        << "ValueError: Block bindings are not allowed when `no_realize=True`";
     CHECK(!predicate.defined()) << "ValueError: `T.where` is not allowed when `no_realize=True`";
     AddToParent(block);
   } else {
@@ -68,7 +69,7 @@ BlockInitFrame Init() {
 void BlockInitFrameNode::EnterWithScope() {
   BlockFrame frame = FindBlockFrame("T.init");
   if (frame->init.defined()) {
-    LOG(FATAL) << "Duplicate block init declaration";
+    LOG(FATAL) << "ValueError: Duplicate block init declaration";
   }
   TIRFrameNode::EnterWithScope();
 }
@@ -92,7 +93,7 @@ BlockFrame FindBlockFrame(const String& method) {
 void Where(PrimExpr predicate) {
   BlockFrame frame = FindBlockFrame("T.where");
   if (frame->predicate.defined()) {
-    LOG(FATAL) << "Duplicate block predicate declaration, previous one is "
+    LOG(FATAL) << "ValueError: Duplicate block predicate declaration, previous one is "
                << frame->predicate.value();
   }
   frame->predicate = predicate;
@@ -102,7 +103,7 @@ void Reads(Array<ObjectRef> buffer_slices) {
   using namespace tvm::tir;
   BlockFrame frame = FindBlockFrame("T.reads");
   if (!frame->reads.empty()) {
-    LOG(FATAL) << "Duplicate read region declaration, previous one is " << frame->reads;
+    LOG(FATAL) << "ValueError: Duplicate read region declaration, previous one is " << frame->reads;
   }
   for (const ObjectRef& obj : buffer_slices) {
     if (const auto* buffer_region = obj.as<BufferRegionNode>()) {
@@ -119,7 +120,8 @@ void Writes(Array<ObjectRef> buffer_slices) {
   using namespace tvm::tir;
   BlockFrame frame = FindBlockFrame("T.writes");
   if (!frame->writes.empty()) {
-    LOG(FATAL) << "Duplicate write region declaration, previous one is " << frame->writes;
+    LOG(FATAL) << "ValueError: Duplicate write region declaration, previous one is "
+               << frame->writes;
   }
   for (const ObjectRef& obj : buffer_slices) {
     if (const auto* buffer_region = obj.as<BufferRegionNode>()) {
@@ -135,7 +137,7 @@ void Writes(Array<ObjectRef> buffer_slices) {
 void BlockAttrs(Map<String, ObjectRef> attrs) {
   BlockFrame frame = FindBlockFrame("T.block_attr");
   if (!frame->annotations.empty()) {
-    LOG(FATAL) << "Duplicate block annotations, previous one is " << frame->annotations;
+    LOG(FATAL) << "ValueError: Duplicate block annotations, previous one is " << frame->annotations;
   }
   frame->annotations = attrs;
 }

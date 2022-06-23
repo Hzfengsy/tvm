@@ -173,9 +173,65 @@ def test_builder_for():
     print(b.get().script())
 
 
+def test_builder_stmt():
+    print("test_builder_stmt")
+    with Builder() as b:
+        with T.prim_func():
+            thread_x = def_("thread_x", T.env_thread("threadIdx.x"))
+            thread_y = def_("thread_y", T.env_thread("threadIdx.y"))
+            buffer_x = def_("buffer_x", tvm.tir.decl_buffer([128, 128]))
+            buffer_y = def_("buffer_y", tvm.tir.decl_buffer([128, 128]))
+            var_x = def_("var_x", tvm.tir.Var("", dtype="int32"))
+            var_y = def_("var_y", tvm.tir.Var("", dtype="int32"))
+            with T.Assert(var_x < var_y, ""):
+                with T.Assert(1, "true"):
+                    pass
+            with T.let(var_x, var_y):
+                pass
+            with T.allocate([128], "uint8", "global") as alloc_x:
+                with T.allocate([128], "uint8", "global") as alloc_y:
+                    alloc_x, alloc_y = def_many(["alloc_x", "alloc_y"], [alloc_x, alloc_y])
+            with T.allocate_const([1, 1, 1, 1, 1], "int32", [5]) as alloc_const_x:
+                with T.allocate_const([10, 10, 10], "float32", [3]) as alloc_const_y:
+                    alloc_const_x, alloc_const_y = def_many(
+                        ["alloc_const_x", "alloc_const_y"], [alloc_const_x, alloc_const_y]
+                    )
+            with T.realize(BufferRegion(buffer_x, [Range(0, var_x), Range(0, var_y)]), ""):
+                with T.realize(BufferRegion(buffer_y, [Range(var_x, 128), Range(var_y, 128)]), ""):
+                    pass
+            with T.attr(buffer_x, "key_x", "value_x"):
+                with T.attr(buffer_y, "key_y", "value_y"):
+                    pass
+            with T.launch_thread(thread_x, 4):
+                with T.launch_thread(thread_y, 4):
+                    pass
+            with T.while_(var_x < var_y):
+                with T.while_(var_x > 0):
+                    pass
+            with T.if_(var_x < var_y):
+                with T.then_():
+                    T.evaluate(0)
+                    T.evaluate(1)
+                with T.else_():
+                    T.evaluate(0)
+                    T.evaluate(1)
+            with T.if_(1):
+                with T.then_():
+                    T.evaluate(1)
+            T.prefetch(buffer_x, [Range(0, 64), Range(64, 128)])
+            T.prefetch(buffer_y, [Range(0, var_x), Range(var_y, 128)])
+            T.buffer_store(buffer_x, 1, [0, 0])
+            T.buffer_store(buffer_x, var_x + var_y, [var_x, var_y])
+            T.evaluate(var_x + var_y)
+            T.evaluate(1)
+
+    print(b.get().script())
+
+
 if __name__ == "__main__":
     test_builder_root_block()
     test_builder_axis()
     test_builder_prim_func()
     test_builder_block()
     test_builder_for()
+    test_builder_stmt()

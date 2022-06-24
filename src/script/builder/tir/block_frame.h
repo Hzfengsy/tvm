@@ -68,7 +68,7 @@ class BlockFrame : public TIRFrame {
   TVM_DEFINE_MUTABLE_NOTNULLABLE_OBJECT_REF_METHODS(BlockFrame, TIRFrame, BlockFrameNode);
 };
 
-BlockFrame Block_(String name, bool no_realize = false);
+BlockFrame Block(String name, bool no_realize = false);
 
 class BlockInitFrameNode : public TIRFrameNode {
  public:
@@ -97,8 +97,8 @@ tvm::tir::Buffer AllocBuffer(Array<PrimExpr> shape, DataType dtype = DataType::F
                              Optional<tvm::tir::Var> data = NullOpt, Array<PrimExpr> strides = {},
                              PrimExpr elem_offset = PrimExpr(), String storage_scope = "",
                              int align = -1, int offset_factor = 0,
-                             String buffer_type_str = "default", Array<IntImm> axis_separators = {},
-                             Span span = Span());
+                             String buffer_type_str = "default",
+                             Array<IntImm> axis_separators = {});
 
 namespace axis {
 tvm::tir::IterVar Spatial(Range dom, PrimExpr binding, DataType dtype = DataType::Int(32));

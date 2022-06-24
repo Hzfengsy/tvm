@@ -61,8 +61,7 @@ class PrimFuncFrame : public TIRFrame {
   TVM_DEFINE_MUTABLE_NOTNULLABLE_OBJECT_REF_METHODS(PrimFuncFrame, TIRFrame, PrimFuncFrameNode);
 };
 
-PrimFuncFrame PrimFunc_();
-PrimFuncFrame FindPrimFuncFrame(const String& method);
+PrimFuncFrame PrimFunc();
 tvm::tir::Var Arg(String name, tvm::tir::Var var);
 tvm::tir::Buffer Arg(String name, tvm::tir::Buffer buffer);
 void FuncName(String name);
@@ -74,15 +73,15 @@ tvm::tir::Buffer MatchBuffer(ObjectRef param, Array<PrimExpr> shape,
                              Optional<tvm::tir::Var> data = NullOpt, Array<PrimExpr> strides = {},
                              PrimExpr elem_offset = PrimExpr(), String storage_scope = "",
                              int align = -1, int offset_factor = 0,
-                             String buffer_type_str = "default", Array<IntImm> axis_separators = {},
-                             Span span = Span());
+                             String buffer_type_str = "default",
+                             Array<IntImm> axis_separators = {});
 
 void PreflattenedBuffer(tvm::tir::Buffer postflattened_buffer, Array<PrimExpr> shape,
                         DataType dtype = DataType::Float(32),
                         Optional<tvm::tir::Var> data = NullOpt, Array<PrimExpr> strides = {},
                         PrimExpr elem_offset = PrimExpr(), String storage_scope = "",
                         int align = -1, int offset_factor = 0, String buffer_type_str = "default",
-                        Array<IntImm> axis_separators = {}, Span span = Span());
+                        Array<IntImm> axis_separators = {});
 
 }  // namespace tir
 }  // namespace builder

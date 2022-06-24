@@ -34,27 +34,7 @@ void FrameNode::ExitWithScope() {
   Builder::Current()->frames.pop_back();
 }
 
-IRModuleFrame::IRModuleFrame() {
-  ObjectPtr<IRModuleFrameNode> n = make_object<IRModuleFrameNode>();
-  n->global_vars.clear();
-  n->functions.clear();
-  data_ = std::move(n);
-}
-
-void IRModuleFrameNode::ExitWithScope() {
-  ICHECK_EQ(functions.size(), global_vars.size());
-  int n = functions.size();
-  Map<GlobalVar, BaseFunc> func_map;
-  for (int i = 0; i < n; ++i) {
-    func_map.Set(global_vars[i], functions[i]);
-  }
-  Builder builder = Builder::Current();
-  ICHECK(!builder->result.defined()) << "ValueError: Builder.result has already been set";
-  builder->result = tvm::IRModule(func_map);
-}
-
 TVM_REGISTER_NODE_TYPE(FrameNode);
-TVM_REGISTER_NODE_TYPE(IRModuleFrameNode);
 TVM_REGISTER_GLOBAL("script.builder.FrameEnter").set_body_method<Frame>(&FrameNode::EnterWithScope);
 TVM_REGISTER_GLOBAL("script.builder.FrameExit").set_body_method<Frame>(&FrameNode::ExitWithScope);
 

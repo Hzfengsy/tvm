@@ -70,7 +70,6 @@ def match_buffer(
     offset_factor=0,
     buffer_type="default",
     axis_separators=None,
-    span=None,
 ) -> Buffer:
     return _ffi_api.MatchBuffer(  # pylint: disable=no-member # type: ignore
         param,
@@ -84,7 +83,6 @@ def match_buffer(
         offset_factor,
         buffer_type,
         axis_separators,
-        span,
     )
 
 
@@ -100,7 +98,6 @@ def preflattened_buffer(
     offset_factor=0,
     buffer_type="default",
     axis_separators=None,
-    span=None,
 ) -> None:
     _ffi_api.PreflattenedBuffer(  # pylint: disable=no-member # type: ignore
         postflattened,
@@ -114,5 +111,4 @@ def preflattened_buffer(
         offset_factor,
         buffer_type,
         axis_separators,
-        span,
     )

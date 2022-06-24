@@ -16,45 +16,65 @@
 # under the License.
 """TVM Script TIR Op"""
 
-from . import _ffi_api
-
-
-from tvm.tir.op import abs, popcount, nextafter, copysign, fmod
+from tvm.tir.expr import Broadcast, Ramp, Select, Shuffle
+from tvm.tir.generic import cast
 from tvm.tir.op import (
-    floor,
-    floordiv,
-    floormod,
+    abs,
+    acos,
+    acosh,
+    asin,
+    asinh,
+    atan,
+    atan2,
+    atanh,
+    call_extern,
+    call_packed,
     ceil,
-    round,
-    trunc,
-    truncdiv,
-    truncmod,
-    nearbyint,
-)
-from tvm.tir.op import (
-    hypot,
-    ldexp,
-    power,
+    clz,
+    comm_reducer,
+    copysign,
+    cos,
+    cosh,
+    erf,
     exp,
     exp2,
     exp10,
-    erf,
-    sqrt,
-    rsqrt,
+    floor,
+    floordiv,
+    floormod,
+    fmod,
+    hypot,
+    if_then_else,
+    infinity,
+    isfinite,
+    isinf,
+    isnan,
+    ldexp,
     log,
+    log1p,
     log2,
     log10,
-    log1p,
+    max_value,
+    min_value,
+    nearbyint,
+    nextafter,
+    popcount,
+    power,
+    reinterpret,
+    round,
+    rsqrt,
     sigmoid,
+    sin,
+    sinh,
+    sqrt,
+    tan,
+    tanh,
+    trunc,
+    truncdiv,
+    truncmod,
 )
-from tvm.tir.op import isnan, isfinite, isinf
-from tvm.tir.op import cos, cosh, sin, sinh, tan, tanh
-from tvm.tir.op import acos, acosh, asin, asinh, atan, atanh
-from tvm.tir.op import atan2, clz, comm_reducer, infinity, reinterpret
-from tvm.tir.op import min_value, max_value, if_then_else
-from tvm.tir.op import call_packed, call_extern
-from tvm.tir.expr import Select, Ramp, Broadcast, Shuffle
-from tvm.tir.generic import cast
+
+from . import _ffi_api
 
 
 def boolean(expr):
@@ -113,7 +133,7 @@ def handle():
     return _ffi_api.Handle()
 
 
-def min(a, b, span=None):
+def min(a, b):
     """Compute the minimum value of two expressions.
 
     Parameters
@@ -124,9 +144,6 @@ def min(a, b, span=None):
     b : PrimExpr
         The right hand operand
 
-    span : Optional[Span]
-        The location of this operator in the source.
-
     Returns
     -------
     res : PrimExpr
@@ -136,10 +153,10 @@ def min(a, b, span=None):
     ----
     This is the default integer division behavior in C.
     """
-    return _ffi_api.min(a, b, span)  # type: ignore
+    return _ffi_api.min(a, b)  # type: ignore
 
 
-def max(a, b, span=None):
+def max(a, b):
     """Compute the maximum value of two expressions.
 
     Parameters
@@ -150,9 +167,6 @@ def max(a, b, span=None):
     b : PrimExpr
         The right hand operand
 
-    span : Optional[Span]
-        The location of this operator in the source.
-
     Returns
     -------
     res : PrimExpr
@@ -162,4 +176,4 @@ def max(a, b, span=None):
     ----
     This is the default integer division behavior in C.
     """
-    return _ffi_api.max(a, b, span)  # type: ignore
+    return _ffi_api.max(a, b)  # type: ignore

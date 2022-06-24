@@ -154,8 +154,8 @@ AllocateFrame Allocate(Array<PrimExpr> extents, DataType dtype, String storage_s
     n->condition = tvm::cast(DataType::Bool(), n->condition);
   }
   n->annotations = annotations.value_or(Map<String, ObjectRef>());
-  n->buffer = DeclBuffer(extents, dtype, "", NullOpt, {}, PrimExpr(), storage_scope, 0, 0,
-                         "default", {}, Span());
+  n->buffer =
+      DeclBuffer(extents, dtype, "", NullOpt, {}, PrimExpr(), storage_scope, 0, 0, "default", {});
   return AllocateFrame(n);
 }
 
@@ -165,8 +165,7 @@ AllocateConstFrame AllocateConst(tvm::runtime::NDArray data, DataType dtype,
   n->dtype = dtype;
   n->extents = extents;
   n->data = data;
-  n->buffer =
-      DeclBuffer(extents, dtype, "", NullOpt, {}, PrimExpr(), "", 0, 0, "default", {}, Span());
+  n->buffer = DeclBuffer(extents, dtype, "", NullOpt, {}, PrimExpr(), "", 0, 0, "default", {});
   return AllocateConstFrame(n);
 }
 

@@ -23,7 +23,7 @@ namespace script {
 namespace builder {
 namespace tir {
 
-tvm::tir::Buffer Buffer_(Array<PrimExpr> shape, DataType dtype, String name, String storage_scope) {
+tvm::tir::Buffer Buffer(Array<PrimExpr> shape, DataType dtype, String name, String storage_scope) {
   return tvm::tir::decl_buffer(shape, dtype, name, storage_scope);
 }
 
@@ -31,7 +31,7 @@ tvm::tir::Buffer DeclBuffer(Array<PrimExpr> shape, DataType dtype, String buffer
                             Optional<tvm::tir::Var> data, Array<PrimExpr> strides,
                             PrimExpr elem_offset, String storage_scope, int align,
                             int offset_factor, String buffer_type_str,
-                            Array<IntImm> axis_separators, Span span) {
+                            Array<IntImm> axis_separators) {
   using namespace tvm::tir;
   Var buffer_data;
   if (!data.defined()) {
@@ -39,13 +39,13 @@ tvm::tir::Buffer DeclBuffer(Array<PrimExpr> shape, DataType dtype, String buffer
     if (storage_dtype == DataType::Bool()) {
       storage_dtype = DataType::Int(8);
     }
-    buffer_data = Var(buffer_name, PointerType(PrimType(storage_dtype), storage_scope), span);
+    buffer_data = Var(buffer_name, PointerType(PrimType(storage_dtype), storage_scope));
   } else {
     buffer_data = data.value();
   }
   BufferType buffer_type = (buffer_type_str == "auto_broadcast") ? kAutoBroadcast : kDefault;
-  return Buffer(buffer_data, dtype, shape, strides, elem_offset, buffer_name, align, offset_factor,
-                buffer_type, axis_separators, span);
+  return tvm::tir::Buffer(buffer_data, dtype, shape, strides, elem_offset, buffer_name, align,
+                          offset_factor, buffer_type, axis_separators);
 }
 
 TVM_STATIC_IR_FUNCTOR(Namer, vtable)
@@ -84,7 +84,7 @@ TVM_STATIC_IR_FUNCTOR(Namer, vtable)
       Namer::Name(var->var, name);
     });
 
-TVM_REGISTER_GLOBAL("script.builder.tir.Buffer").set_body_typed(Buffer_);
+TVM_REGISTER_GLOBAL("script.builder.tir.Buffer").set_body_typed(Buffer);
 
 }  // namespace tir
 }  // namespace builder

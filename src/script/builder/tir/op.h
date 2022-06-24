@@ -29,26 +29,21 @@ namespace script {
 namespace builder {
 namespace tir {
 
-PrimExpr int8(PrimExpr expr) { return cast(DataType::Int(8), expr); }
-PrimExpr int16(PrimExpr expr) { return cast(DataType::Int(16), expr); }
-PrimExpr int32(PrimExpr expr) { return cast(DataType::Int(32), expr); }
-PrimExpr int64(PrimExpr expr) { return cast(DataType::Int(64), expr); }
-
-PrimExpr uint8(PrimExpr expr) { return cast(DataType::UInt(8), expr); }
-PrimExpr uint16(PrimExpr expr) { return cast(DataType::UInt(16), expr); }
-PrimExpr uint32(PrimExpr expr) { return cast(DataType::UInt(32), expr); }
-PrimExpr uint64(PrimExpr expr) { return cast(DataType::UInt(64), expr); }
-
-PrimExpr float8(PrimExpr expr) { return cast(DataType::Float(8), expr); }
-PrimExpr float16(PrimExpr expr) { return cast(DataType::Float(16), expr); }
-PrimExpr float32(PrimExpr expr) { return cast(DataType::Float(32), expr); }
-PrimExpr float64(PrimExpr expr) { return cast(DataType::Float(64), expr); }
-
-PrimExpr bool_(PrimExpr expr) { return cast(DataType::Bool(), expr); }
-
-PrimExpr prim_type(String type_name, PrimExpr expr);
-
-tvm::tir::Var handle() { return tvm::tir::Var("", DataType::Handle()); }
+inline PrimExpr Int8(PrimExpr expr) { return tvm::cast(DataType::Int(8), expr); }
+inline PrimExpr Int16(PrimExpr expr) { return tvm::cast(DataType::Int(16), expr); }
+inline PrimExpr Int32(PrimExpr expr) { return tvm::cast(DataType::Int(32), expr); }
+inline PrimExpr Int64(PrimExpr expr) { return tvm::cast(DataType::Int(64), expr); }
+inline PrimExpr Uint8(PrimExpr expr) { return tvm::cast(DataType::UInt(8), expr); }
+inline PrimExpr Uint16(PrimExpr expr) { return tvm::cast(DataType::UInt(16), expr); }
+inline PrimExpr Uint32(PrimExpr expr) { return tvm::cast(DataType::UInt(32), expr); }
+inline PrimExpr Uint64(PrimExpr expr) { return tvm::cast(DataType::UInt(64), expr); }
+inline PrimExpr Float8(PrimExpr expr) { return tvm::cast(DataType::Float(8), expr); }
+inline PrimExpr Float16(PrimExpr expr) { return tvm::cast(DataType::Float(16), expr); }
+inline PrimExpr Float32(PrimExpr expr) { return tvm::cast(DataType::Float(32), expr); }
+inline PrimExpr Float64(PrimExpr expr) { return tvm::cast(DataType::Float(64), expr); }
+inline PrimExpr Bool(PrimExpr expr) { return tvm::cast(DataType::Bool(), expr); }
+inline tvm::tir::Var Handle() { return tvm::tir::Var("", DataType::Handle()); }
+inline PrimExpr PrimType(DataType dtype, PrimExpr expr) { return tvm::cast(dtype, expr); }
 
 using tvm::cast;
 using tvm::if_then_else;

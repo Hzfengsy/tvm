@@ -15,13 +15,13 @@
 # specific language governing permissions and limitations
 # under the License.
 """TVM Script TIR Block Frame"""
+from typing import Any, Dict, List, Union
+
 from tvm._ffi import register_object as _register_object
+from tvm.tir import Buffer, BufferLoad, BufferRegion
 
 from . import _ffi_api
 from .base import TIRFrame
-
-from typing import List, Dict, Any, Union
-from tvm.tir import Buffer, BufferLoad, BufferRegion
 
 
 @_register_object("script.builder.tir.BlockFrame")
@@ -73,7 +73,6 @@ def alloc_buffer(
     offset_factor=0,
     buffer_type="default",
     axis_separators=None,
-    span=None,
 ) -> Buffer:
     return _ffi_api.AllocBuffer(
         shape,
@@ -86,5 +85,4 @@ def alloc_buffer(
         offset_factor,
         buffer_type,
         axis_separators,
-        span,
     )

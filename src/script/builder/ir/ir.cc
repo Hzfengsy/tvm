@@ -16,23 +16,37 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-#include "./op.h"
+#include "./ir.h"
+
+#include "../builder.h"
 
 namespace tvm {
 namespace script {
 namespace builder {
-namespace tir {
+namespace ir {
 
-TVM_REGISTER_GLOBAL("script.builder.tir.PrimType").set_body_typed(PrimType);
-TVM_REGISTER_GLOBAL("script.builder.tir.Handle").set_body_typed(Handle);
-TVM_REGISTER_GLOBAL("script.builder.tir.min").set_body_typed([](PrimExpr a, PrimExpr b) {
-  return tvm::min(a, b);
-});
-TVM_REGISTER_GLOBAL("script.builder.tir.max").set_body_typed([](PrimExpr a, PrimExpr b) {
-  return tvm::max(a, b);
-});
+IRModuleFrame::IRModuleFrame() {
+  ObjectPtr<IRModuleFrameNode> n = make_object<IRModuleFrameNode>();
+  n->global_vars.clear();
+  n->functions.clear();
+  data_ = std::move(n);
+}
 
-}  // namespace tir
+void IRModuleFrameNode::ExitWithScope() {
+  ICHECK_EQ(functions.size(), global_vars.size());
+  int n = functions.size();
+  Map<GlobalVar, BaseFunc> func_map;
+  for (int i = 0; i < n; ++i) {
+    func_map.Set(global_vars[i], functions[i]);
+  }
+  Builder builder = Builder::Current();
+  ICHECK(!builder->result.defined()) << "ValueError: Builder.result has already been set";
+  builder->result = tvm::IRModule(func_map);
+}
+
+TVM_REGISTER_NODE_TYPE(IRModuleFrameNode);
+
+}  // namespace ir
 }  // namespace builder
 }  // namespace script
 }  // namespace tvm

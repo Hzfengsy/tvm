@@ -30,7 +30,7 @@ namespace script {
 namespace builder {
 namespace tir {
 
-BlockFrame Block_(String name, bool no_realize) {
+BlockFrame Block(String name, bool no_realize) {
   ObjectPtr<BlockFrameNode> n = make_object<BlockFrameNode>();
   n->name = name;
   n->iter_vars.clear();
@@ -49,8 +49,8 @@ BlockFrame Block_(String name, bool no_realize) {
 void BlockFrameNode::ExitWithScope() {
   using namespace tvm::tir;
   TIRFrameNode::ExitWithScope();
-  Block block = Block(iter_vars, reads, writes, name, AsStmt(stmts), init, alloc_buffers,
-                      match_buffers, annotations);
+  tvm::tir::Block block(iter_vars, reads, writes, name, AsStmt(stmts), init, alloc_buffers,
+                        match_buffers, annotations);
   if (no_realize) {
     CHECK(iter_values.empty())
         << "ValueError: Block bindings are not allowed when `no_realize=True`";
@@ -145,10 +145,10 @@ void BlockAttrs(Map<String, ObjectRef> attrs) {
 tvm::tir::Buffer AllocBuffer(Array<PrimExpr> shape, DataType dtype, Optional<tvm::tir::Var> data,
                              Array<PrimExpr> strides, PrimExpr elem_offset, String storage_scope,
                              int align, int offset_factor, String buffer_type_str,
-                             Array<IntImm> axis_separators, Span span) {
+                             Array<IntImm> axis_separators) {
   using namespace tvm::tir;
-  Buffer buffer = DeclBuffer(shape, dtype, "", data, strides, elem_offset, storage_scope, align,
-                             offset_factor, buffer_type_str, axis_separators, span);
+  tvm::tir::Buffer buffer = DeclBuffer(shape, dtype, "", data, strides, elem_offset, storage_scope,
+                                       align, offset_factor, buffer_type_str, axis_separators);
   BlockFrame frame = FindBlockFrame("T.alloc_buffer");
   frame->alloc_buffers.push_back(buffer);
   return buffer;
@@ -236,7 +236,7 @@ Array<tvm::tir::IterVar> Remap(String kinds, Array<PrimExpr> bindings, DataType 
 
 TVM_REGISTER_NODE_TYPE(BlockFrameNode);
 TVM_REGISTER_NODE_TYPE(BlockInitFrameNode);
-TVM_REGISTER_GLOBAL("script.builder.tir.BlockFrame").set_body_typed(Block_);
+TVM_REGISTER_GLOBAL("script.builder.tir.BlockFrame").set_body_typed(Block);
 TVM_REGISTER_GLOBAL("script.builder.tir.BlockInitFrame").set_body_typed(Init);
 TVM_REGISTER_GLOBAL("script.builder.tir.Where").set_body_typed(Where);
 TVM_REGISTER_GLOBAL("script.builder.tir.Reads").set_body_typed(Reads);

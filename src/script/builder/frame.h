@@ -56,30 +56,6 @@ class Frame : public runtime::ObjectRef {
   inline void ExitWithScope();
 };
 
-class IRModuleFrameNode : public FrameNode {
- public:
-  Array<GlobalVar> global_vars;
-  Array<BaseFunc> functions;
-
-  void VisitAttrs(tvm::AttrVisitor* v) {
-    FrameNode::VisitAttrs(v);
-    v->Visit("global_vars", &global_vars);
-    v->Visit("functions", &functions);
-  }
-
-  static constexpr const char* _type_key = "script.builder.IRModuleFrame";
-  TVM_DECLARE_FINAL_OBJECT_INFO(IRModuleFrameNode, FrameNode);
-
- public:
-  void ExitWithScope() final;
-};
-
-class IRModuleFrame : public Frame {
- public:
-  IRModuleFrame();
-  TVM_DEFINE_MUTABLE_NOTNULLABLE_OBJECT_REF_METHODS(IRModuleFrame, Frame, IRModuleFrameNode);
-};
-
 inline void Frame::EnterWithScope() {
   ICHECK(data_ != nullptr);
   static_cast<FrameNode*>(data_.get())->EnterWithScope();

@@ -16,23 +16,45 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-#include "./op.h"
+#ifndef TVM_SCRIPT_BUILDER_IR_IR_H_
+#define TVM_SCRIPT_BUILDER_IR_IR_H_
+
+#include "../frame.h"
 
 namespace tvm {
 namespace script {
 namespace builder {
-namespace tir {
+namespace ir {
 
-TVM_REGISTER_GLOBAL("script.builder.tir.PrimType").set_body_typed(PrimType);
-TVM_REGISTER_GLOBAL("script.builder.tir.Handle").set_body_typed(Handle);
-TVM_REGISTER_GLOBAL("script.builder.tir.min").set_body_typed([](PrimExpr a, PrimExpr b) {
-  return tvm::min(a, b);
-});
-TVM_REGISTER_GLOBAL("script.builder.tir.max").set_body_typed([](PrimExpr a, PrimExpr b) {
-  return tvm::max(a, b);
-});
+class IRModuleFrameNode : public FrameNode {
+ public:
+  Array<GlobalVar> global_vars;
+  Array<BaseFunc> functions;
 
-}  // namespace tir
+  void VisitAttrs(tvm::AttrVisitor* v) {
+    FrameNode::VisitAttrs(v);
+    v->Visit("global_vars", &global_vars);
+    v->Visit("functions", &functions);
+  }
+
+  static constexpr const char* _type_key = "script.builder.ir.IRModuleFrame";
+  TVM_DECLARE_FINAL_OBJECT_INFO(IRModuleFrameNode, FrameNode);
+
+ public:
+  void ExitWithScope() final;
+};
+
+class IRModuleFrame : public Frame {
+ public:
+  IRModuleFrame();
+  TVM_DEFINE_MUTABLE_NOTNULLABLE_OBJECT_REF_METHODS(IRModuleFrame, Frame, IRModuleFrameNode);
+};
+
+IRModuleFrame ir_module();
+
+}  // namespace ir
 }  // namespace builder
 }  // namespace script
 }  // namespace tvm
+
+#endif  // TVM_SCRIPT_BUILDER_IR_IR_H_

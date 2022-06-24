@@ -21,6 +21,7 @@
 
 #include <tvm/tir/function.h>
 
+#include "../ir/ir.h"
 #include "./block_frame.h"
 #include "./var.h"
 
@@ -28,57 +29,6 @@ namespace tvm {
 namespace script {
 namespace builder {
 namespace tir {
-
-void PrimFuncFrameNode::EnterWithScope() {
-  TIRFrameNode::EnterWithScope();
-  // add implicit root block
-  root_block_frame->EnterWithScope();
-}
-
-void PrimFuncFrameNode::ExitWithScope() {
-  using namespace tvm::tir;
-  root_block_frame->ExitWithScope();
-  TIRFrameNode::ExitWithScope();
-  Builder builder = Builder::Current();
-  if (!(stmts.size() == 1 && stmts[0]->IsInstance<BlockRealizeNode>())) {
-    LOG(FATAL) << "ValueError: PrimFuncFrame shoulde have one and only one root block.";
-  }
-  BlockRealize root_block_realize = Downcast<BlockRealize>(stmts[0]);
-  Block root_block = root_block_realize->block;
-  // remove redundant implicit root block
-  if (root_block->alloc_buffers.empty() && root_block->body->IsInstance<BlockRealizeNode>() &&
-      root_block->annotations.empty() && root_block->reads.empty() && root_block->writes.empty()) {
-    stmts.Set(0, root_block->body);
-  }
-  PrimFunc func(/*params=*/args,
-                /*body=*/AsStmt(stmts),
-                /*ret_type=*/ret_type.value_or(TupleType::Empty()),
-                /*buffer_map=*/buffer_map,
-                /*preflattened_buffer_map=*/preflattened_buffer_map,
-                /*attrs=*/DictAttrs(attrs));
-  if (builder->frames.empty()) {
-    ICHECK(!builder->result.defined()) << "ValueError: Builder.result has already been set";
-    builder->result = func;
-  } else if (Optional<IRModuleFrame> opt_frame = builder->FindFrame<IRModuleFrame>()) {
-    IRModuleFrame frame = opt_frame.value();
-    frame->global_vars.push_back(GlobalVar(name.value_or("")));
-    frame->functions.push_back(func);
-  } else {
-    LOG(FATAL) << "ValueError: Cannot find where to insert PrimFunc";
-  }
-}
-
-PrimFuncFrame PrimFunc_() {
-  ObjectPtr<PrimFuncFrameNode> n = make_object<PrimFuncFrameNode>();
-  n->name = NullOpt;
-  n->args.clear();
-  n->ret_type = NullOpt;
-  n->buffer_map.clear();
-  n->preflattened_buffer_map.clear();
-  n->attrs.clear();
-  n->root_block_frame = Block_("root");
-  return PrimFuncFrame(n);
-}
 
 PrimFuncFrame FindPrimFuncFrame(const String& method) {
   Builder builder = Builder::Current();
@@ -94,6 +44,58 @@ PrimFuncFrame FindPrimFuncFrame(const String& method) {
   }
   LOG(FATAL) << "ValueError: '" << method << "' must be called immediately under T.prim_func()";
   throw;
+}
+
+void PrimFuncFrameNode::EnterWithScope() {
+  TIRFrameNode::EnterWithScope();
+  // add implicit root block
+  root_block_frame->EnterWithScope();
+}
+
+void PrimFuncFrameNode::ExitWithScope() {
+  using namespace tvm::tir;
+  using ir::IRModuleFrame;
+  root_block_frame->ExitWithScope();
+  TIRFrameNode::ExitWithScope();
+  Builder builder = Builder::Current();
+  if (!(stmts.size() == 1 && stmts[0]->IsInstance<BlockRealizeNode>())) {
+    LOG(FATAL) << "ValueError: PrimFuncFrame shoulde have one and only one root block.";
+  }
+  BlockRealize root_block_realize = Downcast<BlockRealize>(stmts[0]);
+  tvm::tir::Block root_block = root_block_realize->block;
+  // remove redundant implicit root block
+  if (root_block->alloc_buffers.empty() && root_block->body->IsInstance<BlockRealizeNode>() &&
+      root_block->annotations.empty() && root_block->reads.empty() && root_block->writes.empty()) {
+    stmts.Set(0, root_block->body);
+  }
+  tvm::tir::PrimFunc func(/*params=*/args,
+                          /*body=*/AsStmt(stmts),
+                          /*ret_type=*/ret_type.value_or(TupleType::Empty()),
+                          /*buffer_map=*/buffer_map,
+                          /*preflattened_buffer_map=*/preflattened_buffer_map,
+                          /*attrs=*/DictAttrs(attrs));
+  if (builder->frames.empty()) {
+    ICHECK(!builder->result.defined()) << "ValueError: Builder.result has already been set";
+    builder->result = func;
+  } else if (Optional<IRModuleFrame> opt_frame = builder->FindFrame<IRModuleFrame>()) {
+    IRModuleFrame frame = opt_frame.value();
+    frame->global_vars.push_back(GlobalVar(name.value_or("")));
+    frame->functions.push_back(func);
+  } else {
+    LOG(FATAL) << "ValueError: Cannot find where to insert PrimFunc";
+  }
+}
+
+PrimFuncFrame PrimFunc() {
+  ObjectPtr<PrimFuncFrameNode> n = make_object<PrimFuncFrameNode>();
+  n->name = NullOpt;
+  n->args.clear();
+  n->ret_type = NullOpt;
+  n->buffer_map.clear();
+  n->preflattened_buffer_map.clear();
+  n->attrs.clear();
+  n->root_block_frame = Block("root");
+  return PrimFuncFrame(n);
 }
 
 tvm::tir::Var Arg(String name, tvm::tir::Var var) {
@@ -144,10 +146,10 @@ tvm::tir::Buffer MatchBuffer(ObjectRef param, Array<PrimExpr> shape, DataType dt
                              Optional<tvm::tir::Var> data, Array<PrimExpr> strides,
                              PrimExpr elem_offset, String storage_scope, int align,
                              int offset_factor, String buffer_type_str,
-                             Array<IntImm> axis_separators, Span span) {
+                             Array<IntImm> axis_separators) {
   using namespace tvm::tir;
-  Buffer buffer = DeclBuffer(shape, dtype, "", data, strides, elem_offset, storage_scope, align,
-                             offset_factor, buffer_type_str, axis_separators, span);
+  tvm::tir::Buffer buffer = DeclBuffer(shape, dtype, "", data, strides, elem_offset, storage_scope,
+                                       align, offset_factor, buffer_type_str, axis_separators);
   if (const auto* var = param.as<VarNode>()) {
     PrimFuncFrame frame = FindPrimFuncFrame("T.match_buffer");
     Var v = GetRef<Var>(var);
@@ -170,15 +172,15 @@ tvm::tir::Buffer MatchBuffer(ObjectRef param, Array<PrimExpr> shape, DataType dt
 void PreflattenedBuffer(tvm::tir::Buffer postflattened_buffer, Array<PrimExpr> shape,
                         DataType dtype, Optional<tvm::tir::Var> data, Array<PrimExpr> strides,
                         PrimExpr elem_offset, String storage_scope, int align, int offset_factor,
-                        String buffer_type_str, Array<IntImm> axis_separators, Span span) {
+                        String buffer_type_str, Array<IntImm> axis_separators) {
   using namespace tvm::tir;
   PrimFuncFrame frame = FindPrimFuncFrame("T.preflattened_buffer");
   for (auto const& p : frame->buffer_map) {
     if (p.second.same_as(postflattened_buffer)) {
       String buffer_name(postflattened_buffer->name + "_preflatten");
-      Buffer buffer =
+      tvm::tir::Buffer buffer =
           DeclBuffer(shape, dtype, buffer_name, data, strides, elem_offset, storage_scope, align,
-                     offset_factor, buffer_type_str, axis_separators, span);
+                     offset_factor, buffer_type_str, axis_separators);
       Namer::Name(buffer, buffer_name);
       frame->preflattened_buffer_map.Set(p.first, buffer);
       return;
@@ -189,15 +191,15 @@ void PreflattenedBuffer(tvm::tir::Buffer postflattened_buffer, Array<PrimExpr> s
 };
 
 TVM_REGISTER_NODE_TYPE(PrimFuncFrameNode);
-TVM_REGISTER_GLOBAL("script.builder.tir.PrimFuncFrame").set_body_typed(PrimFunc_);
+TVM_REGISTER_GLOBAL("script.builder.tir.PrimFuncFrame").set_body_typed(PrimFunc);
 TVM_REGISTER_GLOBAL("script.builder.tir.Arg")
     .set_body_typed([](String name, ObjectRef obj) -> ObjectRef {
       using namespace tvm::tir;
       if (const auto* var = obj.as<VarNode>()) {
-        return Arg(name, GetRef<Var>(var));
+        return Arg(name, GetRef<tvm::tir::Var>(var));
       }
       if (const auto* buffer = obj.as<BufferNode>()) {
-        return Arg(name, GetRef<Buffer>(buffer));
+        return Arg(name, GetRef<tvm::tir::Buffer>(buffer));
       }
       LOG(FATAL) << "ValueError: Unexpected type for TIR Arg.";
       throw;

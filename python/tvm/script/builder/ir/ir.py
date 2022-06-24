@@ -14,18 +14,32 @@
 # KIND, either express or implied.  See the License for the
 # specific language governing permissions and limitations
 # under the License.
-"""TVM Script Frames"""
-from tvm._ffi import register_object as _register_object
-from tvm.runtime import Object
+"""TVMScript IR"""
 
+import inspect
+from typing import Optional, Type, Union
+
+from tvm._ffi import register_object as _register_object
+from tvm.ir import IRModule
+
+from ..frame import Frame
 from . import _ffi_api
 
 
-@_register_object("script.builder.Frame")
-class Frame(Object):
-    def __enter__(self) -> "Frame":
-        _ffi_api.FrameEnter(self)  # pylint: disable=no-member # type: ignore
-        return self
+@_register_object("script.builder.ir.IRModuleFrame")
+class IRModuleFrame(Frame):
+    ...
 
-    def __exit__(self, ptype, value, trace) -> None:  # pylint: disable=unused-argument
-        _ffi_api.FrameExit(self)  # pylint: disable=no-member # type: ignore
+
+def ir_module(f: Optional[Type] = None) -> Union[IRModuleFrame, IRModule]:
+    if f is not None:
+        from tvm.script.parse import parse  # pylint: disable=import-outside-toplevel
+
+        if not inspect.isclass(f):
+            raise TypeError(f"Expect a class, but got: {f}")
+
+        return parse(f)
+    return _ffi_api.IRModule()  # pylint: disable=no-member # type: ignore
+
+
+setattr(ir_module, "dispatch_token", "ir")

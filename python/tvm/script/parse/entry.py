@@ -16,7 +16,7 @@
 # under the License.
 """The entry point of TVM parser."""
 import inspect
-from typing import Any, Dict, Optional, Union
+from typing import Any, Union
 
 from ..builder import Builder
 from . import doc

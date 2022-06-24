@@ -14,18 +14,7 @@
 # KIND, either express or implied.  See the License for the
 # specific language governing permissions and limitations
 # under the License.
-"""TVM Script Frames"""
-from tvm._ffi import register_object as _register_object
-from tvm.runtime import Object
+"""FFI APIs for tvm.script.builder.ir"""
+import tvm._ffi
 
-from . import _ffi_api
-
-
-@_register_object("script.builder.Frame")
-class Frame(Object):
-    def __enter__(self) -> "Frame":
-        _ffi_api.FrameEnter(self)  # pylint: disable=no-member # type: ignore
-        return self
-
-    def __exit__(self, ptype, value, trace) -> None:  # pylint: disable=unused-argument
-        _ffi_api.FrameExit(self)  # pylint: disable=no-member # type: ignore
+tvm._ffi._init_api("script.builder.ir", __name__)  # pylint: disable=protected-access

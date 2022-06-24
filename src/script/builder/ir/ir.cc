@@ -25,11 +25,11 @@ namespace script {
 namespace builder {
 namespace ir {
 
-IRModuleFrame::IRModuleFrame() {
+IRModuleFrame IRModule() {
   ObjectPtr<IRModuleFrameNode> n = make_object<IRModuleFrameNode>();
   n->global_vars.clear();
   n->functions.clear();
-  data_ = std::move(n);
+  return IRModuleFrame(n);
 }
 
 void IRModuleFrameNode::ExitWithScope() {
@@ -45,6 +45,7 @@ void IRModuleFrameNode::ExitWithScope() {
 }
 
 TVM_REGISTER_NODE_TYPE(IRModuleFrameNode);
+TVM_REGISTER_GLOBAL("script.builder.ir.IRModule").set_body_typed(IRModule);
 
 }  // namespace ir
 }  // namespace builder

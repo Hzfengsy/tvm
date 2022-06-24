@@ -17,4 +17,4 @@
 # pylint: disable=unused-import
 """Namespace for the TVMScript Builder API."""
 from .builder import Builder, def_, def_many
-from .frame import Frame, IRModuleFrame
+from .frame import Frame

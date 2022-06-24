@@ -46,11 +46,10 @@ class IRModuleFrameNode : public FrameNode {
 
 class IRModuleFrame : public Frame {
  public:
-  IRModuleFrame();
   TVM_DEFINE_MUTABLE_NOTNULLABLE_OBJECT_REF_METHODS(IRModuleFrame, Frame, IRModuleFrameNode);
 };
 
-IRModuleFrame ir_module();
+IRModuleFrame IRModule();
 
 }  // namespace ir
 }  // namespace builder

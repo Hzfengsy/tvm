@@ -14,17 +14,17 @@
 # KIND, either express or implied.  See the License for the
 # specific language governing permissions and limitations
 # under the License.
-"""TVM Script TIR For Frame"""
-import numpy as np
+"""TVMScript TIR statements"""
 from typing import List, Union
 
+import numpy as np
 from tvm._ffi import register_object as _register_object
-from tvm.tir import Buffer, IterVar, PrimExpr, Var, BufferRegion, Stmt, StringImm
-from tvm.ir import Type, Range
-from tvm.runtime import ndarray as nd, Object
+from tvm.runtime import Object
+from tvm.runtime import ndarray as nd
+from tvm.tir import Buffer, BufferRegion, IterVar, PrimExpr, StringImm, Var
 
-from . import _ffi_api
 from .. import _ffi_api as _base_ffi_api
+from . import _ffi_api
 from .base import TIRFrame
 
 

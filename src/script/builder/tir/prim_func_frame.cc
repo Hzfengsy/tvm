@@ -191,7 +191,7 @@ void PreflattenedBuffer(tvm::tir::Buffer postflattened_buffer, Array<PrimExpr> s
 };
 
 TVM_REGISTER_NODE_TYPE(PrimFuncFrameNode);
-TVM_REGISTER_GLOBAL("script.builder.tir.PrimFuncFrame").set_body_typed(PrimFunc);
+TVM_REGISTER_GLOBAL("script.builder.tir.PrimFunc").set_body_typed(PrimFunc);
 TVM_REGISTER_GLOBAL("script.builder.tir.Arg")
     .set_body_typed([](String name, ObjectRef obj) -> ObjectRef {
       using namespace tvm::tir;

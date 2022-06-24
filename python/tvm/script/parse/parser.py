@@ -32,20 +32,6 @@ def _dispatch(self: "Parser", type_name: str) -> dispatch.ParseMethod:
     return lambda self, node: self.generic_visit(node)
 
 
-def _handle_function(self: "Parser", node: doc.FunctionDef) -> None:
-    if not node.decorator_list:
-        self.report_error(node, "Function must be decorated")
-    # TODO: only the last decorator is parsed
-    decorator = self.eval_expr(node.decorator_list[-1])
-    if hasattr(decorator, "dispatch_token"):
-        token = decorator.dispatch_token
-        func = dispatch.get(token=token, type_name="FunctionDef", default=None)
-        if func is not None:
-            func(self, node)
-            return
-    self.report_error(node, "The parser does not understand the decorator")
-
-
 class Parser(doc.NodeVisitor):
     """The TVMScript parser"""
 
@@ -91,6 +77,9 @@ class Parser(doc.NodeVisitor):
     def visit_FunctionDef(self, node: doc.FunctionDef) -> Any:  # pylint: disable=invalid-name
         _handle_function(self, node)
 
+    def visit_ClassDef(self, node: doc.ClassDef) -> Any:  # pylint: disable=invalid-name
+        _handle_class(self, node)
+
     def visit_body(self, node: List[doc.stmt]) -> Any:
         for stmt in node:
             self.visit(stmt)
@@ -106,3 +95,26 @@ class Parser(doc.NodeVisitor):
 
     def visit_Assign(self, node: doc.Assign) -> Any:  # pylint: disable=invalid-name
         _dispatch(self, "Assign")(self, node)
+
+
+def _handle_function(self: Parser, node: doc.FunctionDef) -> None:
+    if not node.decorator_list:
+        self.report_error(node, "Function must be decorated")
+    # TODO: only the last decorator is parsed
+    decorator = self.eval_expr(node.decorator_list[-1])
+    if hasattr(decorator, "dispatch_token"):
+        token = decorator.dispatch_token
+        func = dispatch.get(token=token, type_name="FunctionDef", default=None)
+        if func is not None:
+            func(self, node)
+            return
+    self.report_error(node, "The parser does not understand the decorator")
+
+
+def _handle_class(self: Parser, node: doc.ClassDef) -> None:
+    # TODO: assume IRModule
+    func = dispatch.get(token="ir", type_name="ClassDef", default=None)
+    if func is not None:
+        func(self, node)
+        return
+    self.report_error(node, "The parser does not understand the decorator")

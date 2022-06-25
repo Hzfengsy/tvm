@@ -77,56 +77,56 @@ from tvm.tir.op import (
 from . import _ffi_api
 
 
-def boolean(expr):
-    return _ffi_api.PrimType("bool", expr)
+def int8(expr=None):
+    return _ffi_api.Int8(expr)
 
 
-def int8(expr):
-    return _ffi_api.PrimType("int8", expr)
+def int16(expr=None):
+    return _ffi_api.Int16(expr)
 
 
-def int16(expr):
-    return _ffi_api.PrimType("int16", expr)
+def int32(expr=None):
+    return _ffi_api.Int32(expr)
 
 
-def int32(expr):
-    return _ffi_api.PrimType("int32", expr)
+def int64(expr=None):
+    return _ffi_api.Int64(expr)
 
 
-def int64(expr):
-    return _ffi_api.PrimType("int64", expr)
+def uint8(expr=None):
+    return _ffi_api.UInt8(expr)
 
 
-def uint8(expr):
-    return _ffi_api.PrimType("uint8", expr)
+def uint16(expr=None):
+    return _ffi_api.UInt16(expr)
 
 
-def uint16(expr):
-    return _ffi_api.PrimType("uint16", expr)
+def uint32(expr=None):
+    return _ffi_api.UInt32(expr)
 
 
-def uint32(expr):
-    return _ffi_api.PrimType("uint32", expr)
+def uint64(expr=None):
+    return _ffi_api.UInt64(expr)
 
 
-def uint64(expr):
-    return _ffi_api.PrimType("uint64", expr)
+def float8(expr=None):
+    return _ffi_api.Float8(expr)
 
 
-def float8(expr):
-    return _ffi_api.PrimType("float8", expr)
+def float16(expr=None):
+    return _ffi_api.Float16(expr)
 
 
-def float16(expr):
-    return _ffi_api.PrimType("float16", expr)
+def float32(expr=None):
+    return _ffi_api.Float32(expr)
 
 
-def float32(expr):
-    return _ffi_api.PrimType("float32", expr)
+def float64(expr=None):
+    return _ffi_api.Float64(expr)
 
 
-def float64(expr):
-    return _ffi_api.PrimType("float64", expr)
+def boolean(expr=None):
+    return _ffi_api.Boolean(expr)
 
 
 def handle():

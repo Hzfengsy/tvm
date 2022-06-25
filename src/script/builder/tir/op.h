@@ -29,20 +29,73 @@ namespace script {
 namespace builder {
 namespace tir {
 
-inline PrimExpr Int8(PrimExpr expr) { return tvm::cast(DataType::Int(8), expr); }
-inline PrimExpr Int16(PrimExpr expr) { return tvm::cast(DataType::Int(16), expr); }
-inline PrimExpr Int32(PrimExpr expr) { return tvm::cast(DataType::Int(32), expr); }
-inline PrimExpr Int64(PrimExpr expr) { return tvm::cast(DataType::Int(64), expr); }
-inline PrimExpr Uint8(PrimExpr expr) { return tvm::cast(DataType::UInt(8), expr); }
-inline PrimExpr Uint16(PrimExpr expr) { return tvm::cast(DataType::UInt(16), expr); }
-inline PrimExpr Uint32(PrimExpr expr) { return tvm::cast(DataType::UInt(32), expr); }
-inline PrimExpr Uint64(PrimExpr expr) { return tvm::cast(DataType::UInt(64), expr); }
-inline PrimExpr Float8(PrimExpr expr) { return tvm::cast(DataType::Float(8), expr); }
-inline PrimExpr Float16(PrimExpr expr) { return tvm::cast(DataType::Float(16), expr); }
-inline PrimExpr Float32(PrimExpr expr) { return tvm::cast(DataType::Float(32), expr); }
-inline PrimExpr Float64(PrimExpr expr) { return tvm::cast(DataType::Float(64), expr); }
-inline PrimExpr Bool(PrimExpr expr) { return tvm::cast(DataType::Bool(), expr); }
+inline PrimExpr Int8(Optional<PrimExpr> expr = NullOpt) {
+  DataType dtype = DataType::Int(8);
+  return expr.defined() ? tvm::cast(dtype, expr.value()) : tvm::tir::Var("", dtype);
+}
+
+inline PrimExpr Int16(Optional<PrimExpr> expr = NullOpt) {
+  DataType dtype = DataType::Int(16);
+  return expr.defined() ? tvm::cast(dtype, expr.value()) : tvm::tir::Var("", dtype);
+}
+
+inline PrimExpr Int32(Optional<PrimExpr> expr = NullOpt) {
+  DataType dtype = DataType::Int(32);
+  return expr.defined() ? tvm::cast(dtype, expr.value()) : tvm::tir::Var("", dtype);
+}
+
+inline PrimExpr Int64(Optional<PrimExpr> expr = NullOpt) {
+  DataType dtype = DataType::Int(64);
+  return expr.defined() ? tvm::cast(dtype, expr.value()) : tvm::tir::Var("", dtype);
+}
+
+inline PrimExpr UInt8(Optional<PrimExpr> expr = NullOpt) {
+  DataType dtype = DataType::UInt(8);
+  return expr.defined() ? tvm::cast(dtype, expr.value()) : tvm::tir::Var("", dtype);
+}
+
+inline PrimExpr UInt16(Optional<PrimExpr> expr = NullOpt) {
+  DataType dtype = DataType::UInt(16);
+  return expr.defined() ? tvm::cast(dtype, expr.value()) : tvm::tir::Var("", dtype);
+}
+
+inline PrimExpr UInt32(Optional<PrimExpr> expr = NullOpt) {
+  DataType dtype = DataType::UInt(32);
+  return expr.defined() ? tvm::cast(dtype, expr.value()) : tvm::tir::Var("", dtype);
+}
+
+inline PrimExpr UInt64(Optional<PrimExpr> expr = NullOpt) {
+  DataType dtype = DataType::UInt(64);
+  return expr.defined() ? tvm::cast(dtype, expr.value()) : tvm::tir::Var("", dtype);
+}
+
+inline PrimExpr Float8(Optional<PrimExpr> expr = NullOpt) {
+  DataType dtype = DataType::Float(8);
+  return expr.defined() ? tvm::cast(dtype, expr.value()) : tvm::tir::Var("", dtype);
+}
+
+inline PrimExpr Float16(Optional<PrimExpr> expr = NullOpt) {
+  DataType dtype = DataType::Float(16);
+  return expr.defined() ? tvm::cast(dtype, expr.value()) : tvm::tir::Var("", dtype);
+}
+
+inline PrimExpr Float32(Optional<PrimExpr> expr = NullOpt) {
+  DataType dtype = DataType::Float(32);
+  return expr.defined() ? tvm::cast(dtype, expr.value()) : tvm::tir::Var("", dtype);
+}
+
+inline PrimExpr Float64(Optional<PrimExpr> expr = NullOpt) {
+  DataType dtype = DataType::Float(64);
+  return expr.defined() ? tvm::cast(dtype, expr.value()) : tvm::tir::Var("", dtype);
+}
+
+inline PrimExpr Boolean(Optional<PrimExpr> expr = NullOpt) {
+  DataType dtype = DataType::Bool();
+  return expr.defined() ? tvm::cast(dtype, expr.value()) : tvm::tir::Var("", dtype);
+}
+
 inline tvm::tir::Var Handle() { return tvm::tir::Var("", DataType::Handle()); }
+
 inline PrimExpr PrimType(DataType dtype, PrimExpr expr) { return tvm::cast(dtype, expr); }
 
 using tvm::cast;

@@ -23,6 +23,13 @@ from .evaluator import eval_assign, eval_expr
 from .utils import deferred
 from .var_table import VarTable
 
+DEFAULT_VISIT = {
+    "Interactive",
+    "Module",
+    "Expression",
+    "Pass",
+}
+
 
 def _dispatch(self: "Parser", type_name: str) -> dispatch.ParseMethod:
     for token in [self.dispatch_tokens[-1], "default"]:
@@ -74,27 +81,46 @@ class Parser(doc.NodeVisitor):
     def report_error(self, node: doc.AST, msg: str) -> None:  # pylint: disable=no-self-use
         raise SyntaxError(f"At {node.lineno}:{node.col_offset}: {msg}")
 
+    def visit(self, node: doc.AST) -> None:
+        if isinstance(node, (list, tuple)):
+            for item in node:
+                self.visit(item)
+            return
+        if not isinstance(node, doc.AST):
+            return
+        name = node.__class__.__name__.split(".")[-1]
+        if name in DEFAULT_VISIT:
+            func = self.generic_visit
+        else:
+            func = getattr(self, "visit_" + name, None)
+        if func is None:
+            raise NotImplementedError(f"Visitor of AST node is not implemented: {name}")
+        func(node)
+
+    def visit_body(self, node: List[doc.stmt]) -> Any:
+        for stmt in node:
+            self.visit(stmt)
+
+    def visit_tvm_annotation(self, node: doc.expr) -> Any:
+        return _dispatch(self, "tvm_annotation")(self, node)
+
     def visit_FunctionDef(self, node: doc.FunctionDef) -> Any:  # pylint: disable=invalid-name
         _handle_function(self, node)
 
     def visit_ClassDef(self, node: doc.ClassDef) -> Any:  # pylint: disable=invalid-name
         _handle_class(self, node)
 
-    def visit_body(self, node: List[doc.stmt]) -> Any:
-        for stmt in node:
-            self.visit(stmt)
-
     def visit_arguments(self, node: doc.arguments) -> Any:
-        _dispatch(self, "arguments")(self, node)
+        return _dispatch(self, "arguments")(self, node)
 
     def visit_For(self, node: doc.For) -> Any:  # pylint: disable=invalid-name
-        _dispatch(self, "For")(self, node)
+        return _dispatch(self, "For")(self, node)
 
     def visit_With(self, node: doc.With) -> Any:  # pylint: disable=invalid-name
-        _dispatch(self, "With")(self, node)
+        return _dispatch(self, "With")(self, node)
 
     def visit_Assign(self, node: doc.Assign) -> Any:  # pylint: disable=invalid-name
-        _dispatch(self, "Assign")(self, node)
+        return _dispatch(self, "Assign")(self, node)
 
 
 def _handle_function(self: Parser, node: doc.FunctionDef) -> None:

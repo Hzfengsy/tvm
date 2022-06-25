@@ -201,7 +201,7 @@ TVM_REGISTER_GLOBAL("script.builder.tir.Arg")
       if (const auto* buffer = obj.as<BufferNode>()) {
         return Arg(name, GetRef<tvm::tir::Buffer>(buffer));
       }
-      LOG(FATAL) << "ValueError: Unexpected type for TIR Arg.";
+      LOG(FATAL) << "ValueError: Unexpected type for TIR Arg: " << obj->GetTypeKey();
       throw;
     });
 TVM_REGISTER_GLOBAL("script.builder.tir.FuncName").set_body_typed(FuncName);

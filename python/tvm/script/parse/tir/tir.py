@@ -87,8 +87,17 @@ def visit_arguments(self: Parser, node: doc.arguments) -> None:
     # - kwarg: arg | None
     # - defaults: list[expr]
     # - posonlyargs: list[arg]
+    arg: doc.arg
     for arg in node.args:
         if arg.annotation is None:
             self.report_error(arg, "Type annotation is required for function parameters.")
-        param = T.arg(arg.arg, self.eval_expr(arg.annotation))
+        param = T.arg(arg.arg, self.visit_tvm_annotation(arg.annotation))
         self.var_table.add(arg.arg, param)
+
+
+@dispatch.register(token="tir", type_name="tvm_annotation")
+def visit_tvm_annotation(self: Parser, node: doc.expr):
+    annotation = self.eval_expr(node)
+    if callable(annotation):
+        annotation = annotation()
+    return annotation

@@ -83,39 +83,6 @@ class FunctionDef(stmt):
         self.returns = returns
 
 
-class AsyncFunctionDef(stmt):
-    _FIELDS = [
-        "name",
-        "args",
-        "body",
-        "decorator_list",
-        "returns",
-        "lineno",
-        "col_offset",
-        "end_lineno",
-        "end_col_offset",
-    ]
-
-    def __init__(
-        self,
-        name,
-        args,
-        body,
-        decorator_list,
-        returns,
-        lineno,
-        col_offset,
-        end_lineno,
-        end_col_offset,
-    ):
-        super().__init__(lineno, col_offset, end_lineno, end_col_offset)
-        self.name = name
-        self.args = args
-        self.body = body
-        self.decorator_list = decorator_list
-        self.returns = returns
-
-
 class ClassDef(stmt):
     _FIELDS = [
         "name",
@@ -249,26 +216,6 @@ class For(stmt):
         self.orelse = orelse
 
 
-class AsyncFor(stmt):
-    _FIELDS = [
-        "target",
-        "iter",
-        "body",
-        "orelse",
-        "lineno",
-        "col_offset",
-        "end_lineno",
-        "end_col_offset",
-    ]
-
-    def __init__(self, target, iter, body, orelse, lineno, col_offset, end_lineno, end_col_offset):
-        super().__init__(lineno, col_offset, end_lineno, end_col_offset)
-        self.target = target
-        self.iter = iter
-        self.body = body
-        self.orelse = orelse
-
-
 class While(stmt):
     _FIELDS = [
         "test",
@@ -306,15 +253,6 @@ class If(stmt):
 
 
 class With(stmt):
-    _FIELDS = ["items", "body", "lineno", "col_offset", "end_lineno", "end_col_offset"]
-
-    def __init__(self, items, body, lineno, col_offset, end_lineno, end_col_offset):
-        super().__init__(lineno, col_offset, end_lineno, end_col_offset)
-        self.items = items
-        self.body = body
-
-
-class AsyncWith(stmt):
     _FIELDS = ["items", "body", "lineno", "col_offset", "end_lineno", "end_col_offset"]
 
     def __init__(self, items, body, lineno, col_offset, end_lineno, end_col_offset):
@@ -593,14 +531,6 @@ class GeneratorExp(expr):
         super().__init__(lineno, col_offset, end_lineno, end_col_offset)
         self.elt = elt
         self.generators = generators
-
-
-class Await(expr):
-    _FIELDS = ["value", "lineno", "col_offset", "end_lineno", "end_col_offset"]
-
-    def __init__(self, value, lineno, col_offset, end_lineno, end_col_offset):
-        super().__init__(lineno, col_offset, end_lineno, end_col_offset)
-        self.value = value
 
 
 class Yield(expr):

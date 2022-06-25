@@ -23,14 +23,25 @@ namespace script {
 namespace builder {
 namespace tir {
 
+TVM_REGISTER_GLOBAL("script.builder.tir.Int8").set_body_typed(Int8);
+TVM_REGISTER_GLOBAL("script.builder.tir.Int16").set_body_typed(Int16);
+TVM_REGISTER_GLOBAL("script.builder.tir.Int32").set_body_typed(Int32);
+TVM_REGISTER_GLOBAL("script.builder.tir.Int64").set_body_typed(Int64);
+TVM_REGISTER_GLOBAL("script.builder.tir.UInt8").set_body_typed(UInt8);
+TVM_REGISTER_GLOBAL("script.builder.tir.UInt16").set_body_typed(UInt16);
+TVM_REGISTER_GLOBAL("script.builder.tir.UInt32").set_body_typed(UInt32);
+TVM_REGISTER_GLOBAL("script.builder.tir.UInt64").set_body_typed(UInt64);
+TVM_REGISTER_GLOBAL("script.builder.tir.Float8").set_body_typed(Float8);
+TVM_REGISTER_GLOBAL("script.builder.tir.Float16").set_body_typed(Float16);
+TVM_REGISTER_GLOBAL("script.builder.tir.Float32").set_body_typed(Float32);
+TVM_REGISTER_GLOBAL("script.builder.tir.Float64").set_body_typed(Float64);
+TVM_REGISTER_GLOBAL("script.builder.tir.Boolean").set_body_typed(Boolean);
 TVM_REGISTER_GLOBAL("script.builder.tir.PrimType").set_body_typed(PrimType);
 TVM_REGISTER_GLOBAL("script.builder.tir.Handle").set_body_typed(Handle);
-TVM_REGISTER_GLOBAL("script.builder.tir.min").set_body_typed([](PrimExpr a, PrimExpr b) {
-  return tvm::min(a, b);
-});
-TVM_REGISTER_GLOBAL("script.builder.tir.max").set_body_typed([](PrimExpr a, PrimExpr b) {
-  return tvm::max(a, b);
-});
+TVM_REGISTER_GLOBAL("script.builder.tir.min")
+    .set_body_typed([](PrimExpr a, PrimExpr b) -> PrimExpr { return tvm::min(a, b); });
+TVM_REGISTER_GLOBAL("script.builder.tir.max")
+    .set_body_typed([](PrimExpr a, PrimExpr b) -> PrimExpr { return tvm::max(a, b); });
 
 }  // namespace tir
 }  // namespace builder

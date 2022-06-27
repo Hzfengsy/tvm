@@ -133,14 +133,7 @@ class Delete(stmt):
 
 
 class Assign(stmt):
-    _FIELDS = [
-        "targets",
-        "value",
-        "lineno",
-        "col_offset",
-        "end_lineno",
-        "end_col_offset",
-    ]
+    _FIELDS = ["targets", "value", "lineno", "col_offset", "end_lineno", "end_col_offset"]
 
     def __init__(self, targets, value, lineno, col_offset, end_lineno, end_col_offset):
         super().__init__(lineno, col_offset, end_lineno, end_col_offset)
@@ -149,15 +142,7 @@ class Assign(stmt):
 
 
 class AugAssign(stmt):
-    _FIELDS = [
-        "target",
-        "op",
-        "value",
-        "lineno",
-        "col_offset",
-        "end_lineno",
-        "end_col_offset",
-    ]
+    _FIELDS = ["target", "op", "value", "lineno", "col_offset", "end_lineno", "end_col_offset"]
 
     def __init__(self, target, op, value, lineno, col_offset, end_lineno, end_col_offset):
         super().__init__(lineno, col_offset, end_lineno, end_col_offset)
@@ -179,15 +164,7 @@ class AnnAssign(stmt):
     ]
 
     def __init__(
-        self,
-        target,
-        annotation,
-        value,
-        simple,
-        lineno,
-        col_offset,
-        end_lineno,
-        end_col_offset,
+        self, target, annotation, value, simple, lineno, col_offset, end_lineno, end_col_offset
     ):
         super().__init__(lineno, col_offset, end_lineno, end_col_offset)
         self.target = target
@@ -217,15 +194,7 @@ class For(stmt):
 
 
 class While(stmt):
-    _FIELDS = [
-        "test",
-        "body",
-        "orelse",
-        "lineno",
-        "col_offset",
-        "end_lineno",
-        "end_col_offset",
-    ]
+    _FIELDS = ["test", "body", "orelse", "lineno", "col_offset", "end_lineno", "end_col_offset"]
 
     def __init__(self, test, body, orelse, lineno, col_offset, end_lineno, end_col_offset):
         super().__init__(lineno, col_offset, end_lineno, end_col_offset)
@@ -235,15 +204,7 @@ class While(stmt):
 
 
 class If(stmt):
-    _FIELDS = [
-        "test",
-        "body",
-        "orelse",
-        "lineno",
-        "col_offset",
-        "end_lineno",
-        "end_col_offset",
-    ]
+    _FIELDS = ["test", "body", "orelse", "lineno", "col_offset", "end_lineno", "end_col_offset"]
 
     def __init__(self, test, body, orelse, lineno, col_offset, end_lineno, end_col_offset):
         super().__init__(lineno, col_offset, end_lineno, end_col_offset)
@@ -283,15 +244,7 @@ class Try(stmt):
     ]
 
     def __init__(
-        self,
-        body,
-        handlers,
-        orelse,
-        finalbody,
-        lineno,
-        col_offset,
-        end_lineno,
-        end_col_offset,
+        self, body, handlers, orelse, finalbody, lineno, col_offset, end_lineno, end_col_offset
     ):
         super().__init__(lineno, col_offset, end_lineno, end_col_offset)
         self.body = body
@@ -318,15 +271,7 @@ class Import(stmt):
 
 
 class ImportFrom(stmt):
-    _FIELDS = [
-        "module",
-        "names",
-        "level",
-        "lineno",
-        "col_offset",
-        "end_lineno",
-        "end_col_offset",
-    ]
+    _FIELDS = ["module", "names", "level", "lineno", "col_offset", "end_lineno", "end_col_offset"]
 
     def __init__(self, module, names, level, lineno, col_offset, end_lineno, end_col_offset):
         super().__init__(lineno, col_offset, end_lineno, end_col_offset)
@@ -397,15 +342,7 @@ class BoolOp(expr):
 
 
 class BinOp(expr):
-    _FIELDS = [
-        "left",
-        "op",
-        "right",
-        "lineno",
-        "col_offset",
-        "end_lineno",
-        "end_col_offset",
-    ]
+    _FIELDS = ["left", "op", "right", "lineno", "col_offset", "end_lineno", "end_col_offset"]
 
     def __init__(self, left, op, right, lineno, col_offset, end_lineno, end_col_offset):
         super().__init__(lineno, col_offset, end_lineno, end_col_offset)
@@ -433,15 +370,7 @@ class Lambda(expr):
 
 
 class IfExp(expr):
-    _FIELDS = [
-        "test",
-        "body",
-        "orelse",
-        "lineno",
-        "col_offset",
-        "end_lineno",
-        "end_col_offset",
-    ]
+    _FIELDS = ["test", "body", "orelse", "lineno", "col_offset", "end_lineno", "end_col_offset"]
 
     def __init__(self, test, body, orelse, lineno, col_offset, end_lineno, end_col_offset):
         super().__init__(lineno, col_offset, end_lineno, end_col_offset)
@@ -468,14 +397,7 @@ class Set(expr):
 
 
 class ListComp(expr):
-    _FIELDS = [
-        "elt",
-        "generators",
-        "lineno",
-        "col_offset",
-        "end_lineno",
-        "end_col_offset",
-    ]
+    _FIELDS = ["elt", "generators", "lineno", "col_offset", "end_lineno", "end_col_offset"]
 
     def __init__(self, elt, generators, lineno, col_offset, end_lineno, end_col_offset):
         super().__init__(lineno, col_offset, end_lineno, end_col_offset)
@@ -484,14 +406,7 @@ class ListComp(expr):
 
 
 class SetComp(expr):
-    _FIELDS = [
-        "elt",
-        "generators",
-        "lineno",
-        "col_offset",
-        "end_lineno",
-        "end_col_offset",
-    ]
+    _FIELDS = ["elt", "generators", "lineno", "col_offset", "end_lineno", "end_col_offset"]
 
     def __init__(self, elt, generators, lineno, col_offset, end_lineno, end_col_offset):
         super().__init__(lineno, col_offset, end_lineno, end_col_offset)
@@ -500,15 +415,7 @@ class SetComp(expr):
 
 
 class DictComp(expr):
-    _FIELDS = [
-        "key",
-        "value",
-        "generators",
-        "lineno",
-        "col_offset",
-        "end_lineno",
-        "end_col_offset",
-    ]
+    _FIELDS = ["key", "value", "generators", "lineno", "col_offset", "end_lineno", "end_col_offset"]
 
     def __init__(self, key, value, generators, lineno, col_offset, end_lineno, end_col_offset):
         super().__init__(lineno, col_offset, end_lineno, end_col_offset)
@@ -518,14 +425,7 @@ class DictComp(expr):
 
 
 class GeneratorExp(expr):
-    _FIELDS = [
-        "elt",
-        "generators",
-        "lineno",
-        "col_offset",
-        "end_lineno",
-        "end_col_offset",
-    ]
+    _FIELDS = ["elt", "generators", "lineno", "col_offset", "end_lineno", "end_col_offset"]
 
     def __init__(self, elt, generators, lineno, col_offset, end_lineno, end_col_offset):
         super().__init__(lineno, col_offset, end_lineno, end_col_offset)
@@ -550,15 +450,7 @@ class YieldFrom(expr):
 
 
 class Compare(expr):
-    _FIELDS = [
-        "left",
-        "ops",
-        "comparators",
-        "lineno",
-        "col_offset",
-        "end_lineno",
-        "end_col_offset",
-    ]
+    _FIELDS = ["left", "ops", "comparators", "lineno", "col_offset", "end_lineno", "end_col_offset"]
 
     def __init__(self, left, ops, comparators, lineno, col_offset, end_lineno, end_col_offset):
         super().__init__(lineno, col_offset, end_lineno, end_col_offset)
@@ -568,15 +460,7 @@ class Compare(expr):
 
 
 class Call(expr):
-    _FIELDS = [
-        "func",
-        "args",
-        "keywords",
-        "lineno",
-        "col_offset",
-        "end_lineno",
-        "end_col_offset",
-    ]
+    _FIELDS = ["func", "args", "keywords", "lineno", "col_offset", "end_lineno", "end_col_offset"]
 
     def __init__(self, func, args, keywords, lineno, col_offset, end_lineno, end_col_offset):
         super().__init__(lineno, col_offset, end_lineno, end_col_offset)
@@ -597,14 +481,7 @@ class FormattedValue(expr):
     ]
 
     def __init__(
-        self,
-        value,
-        conversion,
-        format_spec,
-        lineno,
-        col_offset,
-        end_lineno,
-        end_col_offset,
+        self, value, conversion, format_spec, lineno, col_offset, end_lineno, end_col_offset
     ):
         super().__init__(lineno, col_offset, end_lineno, end_col_offset)
         self.value = value
@@ -621,16 +498,7 @@ class JoinedStr(expr):
 
 
 class Constant(expr):
-    _FIELDS = [
-        "value",
-        "kind",
-        "s",
-        "n",
-        "lineno",
-        "col_offset",
-        "end_lineno",
-        "end_col_offset",
-    ]
+    _FIELDS = ["value", "kind", "s", "n", "lineno", "col_offset", "end_lineno", "end_col_offset"]
 
     def __init__(self, value, kind, s, n, lineno, col_offset, end_lineno, end_col_offset):
         super().__init__(lineno, col_offset, end_lineno, end_col_offset)
@@ -641,14 +509,7 @@ class Constant(expr):
 
 
 class NamedExpr(expr):
-    _FIELDS = [
-        "target",
-        "value",
-        "lineno",
-        "col_offset",
-        "end_lineno",
-        "end_col_offset",
-    ]
+    _FIELDS = ["target", "value", "lineno", "col_offset", "end_lineno", "end_col_offset"]
 
     def __init__(self, target, value, lineno, col_offset, end_lineno, end_col_offset):
         super().__init__(lineno, col_offset, end_lineno, end_col_offset)
@@ -657,15 +518,7 @@ class NamedExpr(expr):
 
 
 class Attribute(expr):
-    _FIELDS = [
-        "value",
-        "attr",
-        "ctx",
-        "lineno",
-        "col_offset",
-        "end_lineno",
-        "end_col_offset",
-    ]
+    _FIELDS = ["value", "attr", "ctx", "lineno", "col_offset", "end_lineno", "end_col_offset"]
 
     def __init__(self, value, attr, ctx, lineno, col_offset, end_lineno, end_col_offset):
         super().__init__(lineno, col_offset, end_lineno, end_col_offset)
@@ -682,15 +535,7 @@ class slice(AST):
 
 
 class Slice(slice):
-    _FIELDS = [
-        "lower",
-        "upper",
-        "step",
-        "lineno",
-        "col_offset",
-        "end_lineno",
-        "end_col_offset",
-    ]
+    _FIELDS = ["lower", "upper", "step", "lineno", "col_offset", "end_lineno", "end_col_offset"]
 
     def __init__(self, lower, upper, step, lineno, col_offset, end_lineno, end_col_offset):
         super().__init__(lineno, col_offset, end_lineno, end_col_offset)
@@ -716,15 +561,7 @@ class Index(slice):
 
 
 class Subscript(expr):
-    _FIELDS = [
-        "value",
-        "slice",
-        "ctx",
-        "lineno",
-        "col_offset",
-        "end_lineno",
-        "end_col_offset",
-    ]
+    _FIELDS = ["value", "slice", "ctx", "lineno", "col_offset", "end_lineno", "end_col_offset"]
 
     def __init__(self, value, slice, ctx, lineno, col_offset, end_lineno, end_col_offset):
         super().__init__(lineno, col_offset, end_lineno, end_col_offset)
@@ -1069,17 +906,7 @@ class comprehension(AST):
         "end_col_offset",
     ]
 
-    def __init__(
-        self,
-        target,
-        iter,
-        ifs,
-        is_async,
-        lineno,
-        col_offset,
-        end_lineno,
-        end_col_offset,
-    ):
+    def __init__(self, target, iter, ifs, is_async, lineno, col_offset, end_lineno, end_col_offset):
         super().__init__(lineno, col_offset, end_lineno, end_col_offset)
         self.target = target
         self.iter = iter
@@ -1095,15 +922,7 @@ class excepthandler(AST):
 
 
 class ExceptHandler(excepthandler):
-    _FIELDS = [
-        "type",
-        "name",
-        "body",
-        "lineno",
-        "col_offset",
-        "end_lineno",
-        "end_col_offset",
-    ]
+    _FIELDS = ["type", "name", "body", "lineno", "col_offset", "end_lineno", "end_col_offset"]
 
     def __init__(self, type, name, body, lineno, col_offset, end_lineno, end_col_offset):
         super().__init__(lineno, col_offset, end_lineno, end_col_offset)
@@ -1152,14 +971,7 @@ class arguments(AST):
 
 
 class arg(AST):
-    _FIELDS = [
-        "arg",
-        "annotation",
-        "lineno",
-        "col_offset",
-        "end_lineno",
-        "end_col_offset",
-    ]
+    _FIELDS = ["arg", "annotation", "lineno", "col_offset", "end_lineno", "end_col_offset"]
 
     def __init__(self, arg, annotation, lineno, col_offset, end_lineno, end_col_offset):
         super().__init__(lineno, col_offset, end_lineno, end_col_offset)
@@ -1195,15 +1007,118 @@ class withitem(AST):
         "end_col_offset",
     ]
 
-    def __init__(
-        self,
-        context_expr,
-        optional_vars,
-        lineno,
-        col_offset,
-        end_lineno,
-        end_col_offset,
-    ):
+    def __init__(self, context_expr, optional_vars, lineno, col_offset, end_lineno, end_col_offset):
         super().__init__(lineno, col_offset, end_lineno, end_col_offset)
         self.context_expr = context_expr
         self.optional_vars = optional_vars
+
+
+__all__ = [
+    "AST",
+    "mod",
+    "Module",
+    "Interactive",
+    "Expression",
+    "stmt",
+    "FunctionDef",
+    "ClassDef",
+    "Return",
+    "Delete",
+    "Assign",
+    "AugAssign",
+    "AnnAssign",
+    "For",
+    "While",
+    "If",
+    "With",
+    "Raise",
+    "Try",
+    "Assert",
+    "Import",
+    "ImportFrom",
+    "Global",
+    "Nonlocal",
+    "Expr",
+    "Pass",
+    "Break",
+    "Continue",
+    "expr",
+    "BoolOp",
+    "BinOp",
+    "UnaryOp",
+    "Lambda",
+    "IfExp",
+    "Dict",
+    "Set",
+    "ListComp",
+    "SetComp",
+    "DictComp",
+    "GeneratorExp",
+    "Yield",
+    "YieldFrom",
+    "Compare",
+    "Call",
+    "FormattedValue",
+    "JoinedStr",
+    "Constant",
+    "NamedExpr",
+    "Attribute",
+    "slice",
+    "Slice",
+    "ExtSlice",
+    "Index",
+    "Subscript",
+    "Starred",
+    "Name",
+    "List",
+    "Tuple",
+    "expr_context",
+    "AugLoad",
+    "AugStore",
+    "Param",
+    "Suite",
+    "Del",
+    "Load",
+    "Store",
+    "boolop",
+    "And",
+    "Or",
+    "operator",
+    "Add",
+    "BitAnd",
+    "BitOr",
+    "BitXor",
+    "Div",
+    "FloorDiv",
+    "LShift",
+    "Mod",
+    "Mult",
+    "MatMult",
+    "Pow",
+    "RShift",
+    "Sub",
+    "unaryop",
+    "Invert",
+    "Not",
+    "UAdd",
+    "USub",
+    "cmpop",
+    "Eq",
+    "Gt",
+    "GtE",
+    "In",
+    "Is",
+    "IsNot",
+    "Lt",
+    "LtE",
+    "NotEq",
+    "NotIn",
+    "comprehension",
+    "excepthandler",
+    "ExceptHandler",
+    "arguments",
+    "arg",
+    "keyword",
+    "alias",
+    "withitem",
+]

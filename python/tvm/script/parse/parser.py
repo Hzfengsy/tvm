@@ -65,14 +65,14 @@ class Parser(doc.NodeVisitor):
         if extra_vars is not None:
             for k, v in extra_vars.items():
                 var_values[k] = v
-        return eval_expr(node, var_values)
+        return eval_expr(self, node, var_values)
 
     def eval_assign(
         self,
         target: doc.expr,
         source: Any,
     ) -> Dict[str, Any]:
-        var_values = eval_assign(target, source)
+        var_values = eval_assign(self, target, source)
         for k, v in var_values.items():
             def_(k, v)
             self.var_table.add(k, v)

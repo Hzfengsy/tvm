@@ -132,17 +132,20 @@ def parse(
     source,
     filename="<unknown>",
     mode="exec",
-    *,
-    type_comments=False,
-    feature_version=None,
 ) -> doc.AST:
-    program = ast.parse(
-        source=source,
-        filename=filename,
-        mode=mode,
-        type_comments=type_comments,
-        feature_version=feature_version,
-    )
+    try:
+        program = ast.parse(
+            source=source,
+            filename=filename,
+            mode=mode,
+            feature_version=(3, 8),
+        )
+    except:
+        program = ast.parse(
+            source=source,
+            filename=filename,
+            mode=mode,
+        )
     return to_doc(program)
 
 

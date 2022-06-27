@@ -15,69 +15,22 @@
 # specific language governing permissions and limitations
 # under the License.
 """The entry point of TVM parser."""
-import inspect
 from typing import Any, Union
 
 from ..builder import Builder
 from . import doc
 from .parser import Parser
-
-
-class SourceCode:
-    source_name: str
-    start_line: int
-    start_column: int
-    source: str
-    full_source: str
-
-    def __init__(self, program: Union[str, doc.AST]):
-        if isinstance(program, str):
-            self.source_name = "<str>"
-            self.start_line = 1
-            self.start_column = 0
-            self.source = program
-            self.full_source = program
-        else:
-            self.source_name = inspect.getsourcefile(program)  # type: ignore
-            lines, self.start_line = inspect.getsourcelines(program)  # type: ignore
-            if lines:
-                self.start_column = len(lines[0]) - len(lines[0].lstrip())
-            else:
-                self.start_column = 0
-            if self.start_column and lines:
-                self.source = "\n".join([l[self.start_column :].rstrip() for l in lines])
-            else:
-                self.source = "".join(lines)
-            try:
-                # It will cause a problem when running in Jupyter Notebook.
-                # `mod` will be <module '__main__'>, which is a built-in module
-                # and `getsource` will throw a TypeError
-                mod = inspect.getmodule(program)
-                if mod:
-                    self.full_source = inspect.getsource(mod)
-                else:
-                    self.full_source = self.source
-            except TypeError:
-                # It's a work around for Jupyter problem.
-                # Since `findsource` is an internal API of inspect, we just use it
-                # as a fallback method.
-                src, _ = inspect.findsource(program)  # type: ignore
-                self.full_source = "".join(src)
-
-    def as_ast(self) -> doc.AST:
-        return doc.parse(self.source)
+from .source import Source
 
 
 def parse(program: Union[doc.AST, Any, str]):
-    # TODO: `extra_vars` is a hack
-    from tvm.script.builder import tir as T
+    from tvm.script.builder import tir as T  # pylint: disable=import-outside-toplevel
 
-    extra_vars = {"T": T}
-    program_ast = SourceCode(program).as_ast()
-    parser = Parser()
+    extra_vars = {  # TODO: `extra_vars` is a hack
+        "T": T,
+    }
+    source = Source(program)
+    parser = Parser(source)
     with Builder() as builder:
-        with parser.var_table.with_frame():
-            for k, v in extra_vars.items():
-                parser.var_table.add(k, v)
-            parser.visit(program_ast)
+        parser.parse(vars=extra_vars)
     return builder.get()

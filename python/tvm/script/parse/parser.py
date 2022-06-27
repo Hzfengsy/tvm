@@ -19,7 +19,9 @@ from typing import Any, Dict, List, Optional, Union
 
 from ..builder import def_
 from . import dispatch, doc
+from .diagnostics import Diagnostics
 from .evaluator import eval_assign, eval_expr
+from .source import Source
 from .utils import deferred
 from .var_table import VarTable
 
@@ -42,12 +44,23 @@ def _dispatch(self: "Parser", type_name: str) -> dispatch.ParseMethod:
 class Parser(doc.NodeVisitor):
     """The TVMScript parser"""
 
+    diag: Diagnostics
     dispatch_tokens: List[str]
     var_table: VarTable
 
-    def __init__(self) -> None:
+    def __init__(self, source: Source) -> None:
+        self.diag = Diagnostics(source)
         self.dispatch_tokens = ["default"]
         self.var_table = VarTable()
+
+    def parse(self, vars: Optional[Dict[str, Any]] = None) -> Any:
+        if vars is None:
+            vars = {}
+        with self.var_table.with_frame():
+            for k, v in vars.items():
+                self.var_table.add(k, v)
+            node = self.diag.source.as_ast()
+            self.visit(node)
 
     def with_dispatch_token(self, token: str):
         def pop_token():
@@ -79,7 +92,7 @@ class Parser(doc.NodeVisitor):
         return var_values
 
     def report_error(self, node: doc.AST, msg: str) -> None:  # pylint: disable=no-self-use
-        raise SyntaxError(f"At {node.lineno}:{node.col_offset}: {msg}")
+        self.diag.error(node, msg)
 
     def visit(self, node: doc.AST) -> None:
         if isinstance(node, (list, tuple)):

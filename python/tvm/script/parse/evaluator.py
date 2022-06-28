@@ -58,14 +58,26 @@ class ExprEvaluator:
             if node.id not in self.value_table:
                 self.parser.report_error(node, "Undefined variable: %s" % node.id)
             return node
-        if isinstance(node, doc.Constant):
+        if (not isinstance(node, doc.expr)) or isinstance(
+            node,
+            (
+                doc.Constant,
+                doc.expr_context,
+                doc.operator,
+                doc.boolop,
+                doc.unaryop,
+                doc.cmpop,
+                doc.slice,
+            ),
+        ):
             return node
         new_fields = {}
         for field in node.__class__._FIELDS:  # pylint: disable=protected-access
-            if isinstance(field, doc.AST):
-                new_fields[field] = self._visit(getattr(node, field))
+            attr = getattr(node, field)
+            if isinstance(attr, (doc.AST, tuple, list)):
+                new_fields[field] = self._visit(attr)
             else:
-                new_fields[field] = getattr(node, field)
+                new_fields[field] = attr
         try:
             new_value = _eval_expr(node.__class__(**new_fields), self.value_table)
         except Exception as e:

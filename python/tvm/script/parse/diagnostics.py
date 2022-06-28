@@ -40,8 +40,8 @@ class Diagnostics:
                     source_name=SourceName(self.source.source_name),
                     line=node.lineno,
                     end_line=node.end_lineno,
-                    column=node.col_offset,
-                    end_column=node.end_col_offset,
+                    column=node.col_offset + 1,
+                    end_column=node.end_col_offset + 1,
                 ),
                 message=message,
             )

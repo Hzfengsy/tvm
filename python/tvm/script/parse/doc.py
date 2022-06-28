@@ -1,5 +1,6 @@
 import ast
 import inspect
+import sys
 import typing
 from collections import defaultdict
 
@@ -96,38 +97,6 @@ def to_doc(node):
     return func(node)
 
 
-def _register_default():
-    class DefaultTranslator:
-        def __init__(self, doc_cls, func, fields):
-            self.doc_cls = doc_cls  # getattr(doc, name)
-            self.func = func
-            self.fields = fields
-
-        def __call__(self, node):
-            kv = {attr: self.func(getattr(node, attr, None)) for attr in self.fields}
-            return self.doc_cls(**kv)
-
-    Registry._inst = Registry()  # pylint: disable=protected-access
-    for cls_name in dir(doc):
-        doc_cls = getattr(doc, cls_name)
-        if inspect.isclass(doc_cls) and issubclass(doc_cls, doc.AST):
-            assert "." not in cls_name
-            register_to_doc(cls_name)(
-                DefaultTranslator(
-                    getattr(doc, cls_name),
-                    to_doc,
-                    doc_cls._FIELDS,  # pylint: disable=protected-access
-                )
-            )
-            register_from_doc(cls_name)(
-                DefaultTranslator(
-                    getattr(ast, cls_name),
-                    from_doc,
-                    doc_cls._FIELDS,  # pylint: disable=protected-access
-                )
-            )
-
-
 def parse(
     source,
     filename="<unknown>",
@@ -198,4 +167,66 @@ class NodeTransformer:
         return node.__class__(**kv)
 
 
+def _register_default():
+    class DefaultTranslator:
+        def __init__(self, doc_cls, func, fields):
+            self.doc_cls = doc_cls  # getattr(doc, name)
+            self.func = func
+            self.fields = fields
+
+        def __call__(self, node):
+            kv = {attr: self.func(getattr(node, attr, None)) for attr in self.fields}
+            return self.doc_cls(**kv)
+
+    Registry._inst = Registry()  # pylint: disable=protected-access
+    for cls_name in dir(doc):
+        doc_cls = getattr(doc, cls_name)
+        if not hasattr(ast, cls_name):
+            continue
+        if inspect.isclass(doc_cls) and issubclass(doc_cls, doc.AST):
+            assert "." not in cls_name
+            register_to_doc(cls_name)(
+                DefaultTranslator(
+                    getattr(doc, cls_name),
+                    to_doc,
+                    doc_cls._FIELDS,  # pylint: disable=protected-access
+                )
+            )
+            register_from_doc(cls_name)(
+                DefaultTranslator(
+                    getattr(ast, cls_name),
+                    from_doc,
+                    doc_cls._FIELDS,  # pylint: disable=protected-access
+                )
+            )
+
+
+def _register_constant_handling():
+    version = sys.version_info.major, sys.version_info.minor
+    if version != (3, 6) and version != (3, 7):
+        pass
+
+    def as_constant(f) -> doc.Constant:
+        def to_doc_func(x: ast.AST) -> doc.Constant:
+            return doc.Constant(
+                value=getattr(x, f) if isinstance(f, str) else f(x),
+                kind=None,
+                s=None,
+                n=None,
+                lineno=x.lineno,
+                col_offset=x.col_offset,
+                end_lineno=x.lineno,
+                end_col_offset=x.col_offset,
+            )
+
+        return to_doc_func
+
+    register_to_doc("Str")(as_constant("s"))
+    register_to_doc("NameConstant")(as_constant("value"))
+    register_to_doc("Num")(as_constant("n"))
+    register_to_doc("Bytes")(as_constant("s"))
+    register_to_doc("Ellipsis")(as_constant(lambda _: ...))
+
+
 _register_default()
+_register_constant_handling()

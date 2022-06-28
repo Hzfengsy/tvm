@@ -33,15 +33,19 @@ class Diagnostics:
         self.ctx = diagnostics.DiagnosticContext(mod, diagnostics.get_renderer())
 
     def _emit(self, node: doc.AST, message: str, level: diagnostics.DiagnosticLevel) -> None:
+        lineno = node.lineno
+        col_offset = node.col_offset
+        end_lineno = node.end_lineno or lineno
+        end_col_offset = node.end_col_offset or col_offset
         self.ctx.emit(
             diagnostics.Diagnostic(
                 level=level,
                 span=Span(
                     source_name=SourceName(self.source.source_name),
-                    line=node.lineno,
-                    end_line=node.end_lineno,
-                    column=node.col_offset + 1,
-                    end_column=node.end_col_offset + 1,
+                    line=lineno,
+                    end_line=end_lineno,
+                    column=col_offset + 1,
+                    end_column=end_col_offset + 1,
                 ),
                 message=message,
             )

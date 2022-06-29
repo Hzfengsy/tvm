@@ -41,6 +41,8 @@ class FrameNode : public runtime::Object {
   virtual ~FrameNode() = default;
   virtual void EnterWithScope();
   virtual void ExitWithScope();
+
+  void AddCallback(runtime::TypedPackedFunc<void()> callback);
 };
 
 class Frame : public runtime::ObjectRef {

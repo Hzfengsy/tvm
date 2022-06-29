@@ -22,6 +22,8 @@ from ...builder import tir as T
 from .. import dispatch, doc
 from ..parser import Parser
 
+from functools import partial
+
 
 @dispatch.register(token="tir", type_name="For")
 def visit_for(self: Parser, node: doc.For) -> None:
@@ -44,7 +46,14 @@ def visit_assign(self: Parser, node: doc.Assign) -> None:
         self.report_error(node, "Consequential assignments like 'a = b = c' are not supported.")
     lhs = node.targets[0]
     rhs = self.eval_expr(node.value)
-    self.eval_assign(target=lhs, source=rhs)
+    if isinstance(rhs, Frame):
+        rhs.add_callback(partial(rhs.__exit__, None, None, None))
+        res = rhs.__enter__()
+        self.eval_assign(target=lhs, source=res)
+    elif isinstance(lhs, doc.Subscript):
+        T.buffer_store(self.eval_expr(lhs.value), rhs, self.eval_expr(lhs.slice))
+    else:
+        self.eval_assign(target=lhs, source=rhs)
 
 
 @dispatch.register(token="tir", type_name="With")
@@ -101,3 +110,8 @@ def visit_tvm_annotation(self: Parser, node: doc.expr):
     if callable(annotation):
         annotation = annotation()
     return annotation
+
+
+@dispatch.register(token="tir", type_name="Expr")
+def visit_expr_stmt(self: Parser, node: doc.Expr) -> None:
+    self.eval_expr(node.value)

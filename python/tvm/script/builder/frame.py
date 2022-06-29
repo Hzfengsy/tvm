@@ -29,3 +29,6 @@ class Frame(Object):
 
     def __exit__(self, ptype, value, trace) -> None:  # pylint: disable=unused-argument
         _ffi_api.FrameExit(self)  # pylint: disable=no-member # type: ignore
+
+    def add_callback(self, callback) -> None:  # pylint: disable=unused-argument
+        _ffi_api.FrameAddCallback(self, callback)  # pylint: disable=no-member # type: ignore

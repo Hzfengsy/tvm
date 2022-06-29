@@ -2,6 +2,7 @@ import inspect
 
 import pytest
 import tvm
+from tvm.ir import structural_equal
 from tvm.script.builder import ir as I
 from tvm.script.builder import tir as T
 
@@ -19,6 +20,8 @@ def test_parse_elementwise():
                 vi = T.axis.S(128, i + 1)
                 vj = T.axis.S(128, j + 20)
                 vk = T.axis.R(128, k - i)
+                A[vi + 1, vj] = 0
+                B[vi, vj, vk] = 1
 
     # pylint: enable=unused-argument,unused-variable,invalid-name
 
@@ -79,9 +82,37 @@ def test_parse_report_error():
                     vj = T.axis.S(128, vvv[10] + 20)
 
 
+def test_parse_concise_scope():
+    # pylint: disable=unused-argument,unused-variable,invalid-name
+    @T.prim_func
+    def concise_scope(
+        A: T.handle,
+    ) -> None:
+        A_local = T.allocate([64], "float32", "local")
+        B_local = T.allocate([64], "float32", "local")
+        C_local = T.allocate([64], "float32", "local")
+        T.evaluate(1)
+        T.evaluate(2)
+        T.evaluate(3)
+
+    @T.prim_func
+    def normal_scope(
+        A: T.handle,
+    ) -> None:
+        with T.allocate([64], "float32", "local") as A_local:
+            with T.allocate([64], "float32", "local") as B_local:
+                with T.allocate([64], "float32", "local") as C_local:
+                    T.evaluate(1)
+                    T.evaluate(2)
+                    T.evaluate(3)
+
+    assert structural_equal(normal_scope, concise_scope)
+
+
 if __name__ == "__main__":
     test_parse_elementwise()
     test_parse_skip()
     test_parse_class()
     test_parse_atomic()
     test_parse_report_error()
+    test_parse_concise_scope()

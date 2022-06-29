@@ -135,6 +135,9 @@ class Parser(doc.NodeVisitor):
     def visit_Assign(self, node: doc.Assign) -> Any:  # pylint: disable=invalid-name
         return _dispatch(self, "Assign")(self, node)
 
+    def visit_Expr(self, node: doc.Expr) -> Any:
+        return _dispatch(self, "Expr")(self, node)  # pylint: disable=invalid-name
+
 
 def _handle_function(self: Parser, node: doc.FunctionDef) -> None:
     if not node.decorator_list:

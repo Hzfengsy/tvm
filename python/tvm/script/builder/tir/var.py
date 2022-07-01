@@ -15,9 +15,95 @@
 # specific language governing permissions and limitations
 # under the License.
 """TVM Script TIR Buffer"""
-from tvm import tir
-
+from tvm.ir import PrimExpr, Array, Range
+from tvm.tir import Var, IntImm, BufferLoad, BufferRegion
+from tvm._ffi import register_object as _register_object
+from tvm.runtime import Object, DataType
 from . import _ffi_api
+
+
+@_register_object("script.builder.tir.Buffer")
+class Buffer_(Object):
+    def __init__(
+        self,
+        shape,
+        dtype="float32",
+        name="buffer",
+        data=None,
+        strides=None,
+        elem_offset=None,
+        scope="",
+        data_alignment=0,
+        offset_factor=0,
+        buffer_type="",
+        axis_separators=None,
+    ) -> None:
+        self.__init_handle_by_constructor__(
+            _ffi_api.Buffer,
+            shape,
+            dtype,
+            name,
+            data,
+            strides,
+            elem_offset,
+            scope,
+            data_alignment,
+            offset_factor,
+            buffer_type,
+            axis_separators,
+        )
+
+    @property
+    def data(self) -> Var:
+        return self.buffer.data
+
+    @property
+    def dtype(self) -> DataType:
+        return self.buffer.dtype
+
+    @property
+    def shape(self) -> Array:
+        return self.buffer.shape
+
+    @property
+    def axis_separators(self) -> Array:
+        return self.buffer.axis_separators
+
+    @property
+    def strides(self) -> Array:
+        return self.buffer.strides
+
+    @property
+    def elem_offset(self) -> PrimExpr:
+        return self.buffer.elem_offset
+
+    @property
+    def name(self) -> str:
+        return self.buffer.name
+
+    @property
+    def data_alignment(self) -> int:
+        return self.buffer.data_alignment
+
+    @property
+    def offset_factor(self) -> int:
+        return self.buffer.offset_factor
+
+    @property
+    def buffer_type(self) -> int:
+        return self.buffer.buffer_type
+
+    def __getitem__(self, indices):
+        if any(isinstance(index, slice) for index in indices):
+            region = []
+            for index in indices:
+                if isinstance(index, slice):
+                    region.append(Range(index.start, index.stop))
+                else:
+                    region.append(Range.from_min_extent(index, 1))
+            return BufferRegion(self.buffer, region)
+        else:
+            return BufferLoad(self.buffer, indices)
 
 
 class BufferProxy:
@@ -25,14 +111,31 @@ class BufferProxy:
         self,
         shape,
         dtype="float32",
-        *,
-        storage_scope="",
-    ) -> tir.Buffer:
-        return _ffi_api.Buffer(  # pylint: disable=no-member # type: ignore
-            shape, dtype, "", storage_scope
+        name="buffer",
+        data=None,
+        strides=None,
+        elem_offset=None,
+        scope="",
+        data_alignment=0,
+        offset_factor=0,
+        buffer_type="",
+        axis_separators=None,
+    ) -> Buffer_:
+        return Buffer_(
+            shape,
+            dtype,
+            name,
+            data,
+            strides,
+            elem_offset,
+            scope,
+            data_alignment,
+            offset_factor,
+            buffer_type,
+            axis_separators,
         )
 
-    def __getitem__(self, keys) -> tir.Buffer:
+    def __getitem__(self, keys) -> Buffer_:
         return self(*keys)  # pylint: disable=no-member # type: ignore
 
 

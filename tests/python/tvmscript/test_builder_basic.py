@@ -18,7 +18,6 @@
 import tvm
 from tvm.script.builder import Builder, def_, def_many
 from tvm.script.builder import tir as T
-from tvm.tir import BufferLoad, BufferRegion
 from tvm.ir import Range
 
 
@@ -134,17 +133,8 @@ def test_builder_block():
                     with T.init():
                         pass
                     vi, vj, vk = def_many(["vi", "vj", "vk"], T.axis.remap("SSR", [i, j, k]))
-                    T.reads(
-                        BufferRegion(
-                            A,
-                            [
-                                Range(vi, vi + 1),
-                                Range.from_min_extent(vj, 2),
-                                Range(vk, vk + BufferLoad(B, [1, 2, BufferLoad(A, [3, 4, 5])])),
-                            ],
-                        )
-                    )
-                    T.writes([BufferLoad(A, [100, BufferLoad(A, [50, 51, 52]), 102])])
+                    T.reads(A[vi, vj, vk : vk + B[1, 2, A[3, 4, 5]]])
+                    T.writes(A[100, A[50, 51, 52], 102])
                     E = def_("E", T.alloc_buffer((128, 128)))
                     F = def_("F", T.alloc_buffer((128, 128)))
     print(b.get().script())
@@ -179,8 +169,8 @@ def test_builder_stmt():
         with T.prim_func():
             thread_x = def_("thread_x", T.env_thread("threadIdx.x"))
             thread_y = def_("thread_y", T.env_thread("threadIdx.y"))
-            buffer_x = def_("buffer_x", tvm.tir.decl_buffer([128, 128]))
-            buffer_y = def_("buffer_y", tvm.tir.decl_buffer([128, 128]))
+            buffer_x = def_("buffer_x", T.Buffer([128, 128]))
+            buffer_y = def_("buffer_y", T.Buffer([128, 128]))
             var_x = def_("var_x", tvm.tir.Var("", dtype="int32"))
             var_y = def_("var_y", tvm.tir.Var("", dtype="int32"))
             with T.Assert(var_x < var_y, ""):
@@ -196,8 +186,8 @@ def test_builder_stmt():
                     alloc_const_x, alloc_const_y = def_many(
                         ["alloc_const_x", "alloc_const_y"], [alloc_const_x, alloc_const_y]
                     )
-            with T.realize(BufferRegion(buffer_x, [Range(0, var_x), Range(0, var_y)]), ""):
-                with T.realize(BufferRegion(buffer_y, [Range(var_x, 128), Range(var_y, 128)]), ""):
+            with T.realize(buffer_x[0:var_x, 0:var_y], ""):
+                with T.realize(buffer_x[var_x:128, var_y:128], ""):
                     pass
             with T.attr(buffer_x, "key_x", "value_x"):
                 with T.attr(buffer_y, "key_y", "value_y"):

@@ -20,8 +20,8 @@ def test_parse_elementwise():
                 vi = T.axis.S(128, i + 1)
                 vj = T.axis.S(128, j + 20)
                 vk = T.axis.R(128, k - i)
-                A[vi + 1, vj] = 0
-                B[vi, vj, vk] = 1
+                A[vi + 1, vj] = A[vi, vk] * B[vvv[0], vvv[1], vvv[2]] + 2
+                B[vi, vj, vk] = A[vvv[0], vvv[-1]]
 
     # pylint: enable=unused-argument,unused-variable,invalid-name
 

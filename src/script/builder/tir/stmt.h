@@ -20,6 +20,7 @@
 #define TVM_SCRIPT_BUILDER_TIR_STMT_H_
 
 #include "./base.h"
+#include "./var.h"
 
 namespace tvm {
 namespace script {
@@ -79,7 +80,7 @@ class AllocateFrameNode : public TIRFrameNode {
   String storage_scope;
   PrimExpr condition;
   Map<String, ObjectRef> annotations;
-  tvm::tir::Buffer buffer;
+  Buffer buffer{nullptr};
 
   void VisitAttrs(tvm::AttrVisitor* v) {
     TIRFrameNode::VisitAttrs(v);
@@ -108,7 +109,7 @@ class AllocateConstFrameNode : public TIRFrameNode {
   DataType dtype;
   Array<PrimExpr> extents;
   tvm::runtime::NDArray data;
-  tvm::tir::Buffer buffer;
+  Buffer buffer{nullptr};
   void VisitAttrs(tvm::AttrVisitor* v) {
     TIRFrameNode::VisitAttrs(v);
     v->Visit("dtype", &dtype);
@@ -281,8 +282,8 @@ class ElseFrame : public TIRFrame {
 };
 
 tvm::tir::IterVar EnvThread(String thread_tag);
-void BufferStore(tvm::tir::Buffer buffer, PrimExpr value, Array<PrimExpr> indices);
-void Prefetch(tvm::tir::Buffer buffer, Array<Range> bounds);
+void BufferStore(Buffer buffer, PrimExpr value, Array<PrimExpr> indices);
+void Prefetch(Buffer buffer, Array<Range> bounds);
 void Evaluate(PrimExpr value);
 
 AssertFrame Assert(PrimExpr condition, String message);

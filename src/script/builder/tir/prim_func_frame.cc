@@ -53,26 +53,34 @@ void PrimFuncFrameNode::EnterWithScope() {
 }
 
 void PrimFuncFrameNode::ExitWithScope() {
-  using namespace tvm::tir;
   using ir::IRModuleFrame;
   root_block_frame->ExitWithScope();
   TIRFrameNode::ExitWithScope();
   Builder builder = Builder::Current();
-  if (!(stmts.size() == 1 && stmts[0]->IsInstance<BlockRealizeNode>())) {
+  if (!(stmts.size() == 1 && stmts[0]->IsInstance<tvm::tir::BlockRealizeNode>())) {
     LOG(FATAL) << "ValueError: PrimFuncFrame shoulde have one and only one root block.";
   }
-  BlockRealize root_block_realize = Downcast<BlockRealize>(stmts[0]);
+  tvm::tir::BlockRealize root_block_realize = Downcast<tvm::tir::BlockRealize>(stmts[0]);
   tvm::tir::Block root_block = root_block_realize->block;
   // remove redundant implicit root block
-  if (root_block->alloc_buffers.empty() && root_block->body->IsInstance<BlockRealizeNode>() &&
+  if (root_block->alloc_buffers.empty() &&
+      root_block->body->IsInstance<tvm::tir::BlockRealizeNode>() &&
       root_block->annotations.empty() && root_block->reads.empty() && root_block->writes.empty()) {
     stmts.Set(0, root_block->body);
+  }
+  Map<tvm::tir::Var, tvm::tir::Buffer> tir_buffer_map;
+  Map<tvm::tir::Var, tvm::tir::Buffer> tir_preflattened_buffer_map;
+  for (auto const& p : buffer_map) {
+    tir_buffer_map.Set(p.first, p.second->buffer);
+  }
+  for (auto const& p : preflattened_buffer_map) {
+    tir_preflattened_buffer_map.Set(p.first, p.second->buffer);
   }
   tvm::tir::PrimFunc func(/*params=*/args,
                           /*body=*/AsStmt(stmts),
                           /*ret_type=*/ret_type.value_or(TupleType::Empty()),
-                          /*buffer_map=*/buffer_map,
-                          /*preflattened_buffer_map=*/preflattened_buffer_map,
+                          /*buffer_map=*/tir_buffer_map,
+                          /*preflattened_buffer_map=*/tir_preflattened_buffer_map,
                           /*attrs=*/DictAttrs(attrs));
   if (builder->frames.empty()) {
     ICHECK(!builder->result.defined()) << "ValueError: Builder.result has already been set";
@@ -105,11 +113,10 @@ tvm::tir::Var Arg(String name, tvm::tir::Var var) {
   return var;
 }
 
-tvm::tir::Buffer Arg(String name, tvm::tir::Buffer buffer) {
-  using namespace tvm::tir;
+Buffer Arg(String name, Buffer buffer) {
   PrimFuncFrame frame = FindPrimFuncFrame("T.Arg");
   Namer::Name(buffer, name);
-  Var handle(buffer->name + "_handle", DataType::Handle());
+  tvm::tir::Var handle(buffer->buffer->name + "_handle", DataType::Handle());
   frame->args.push_back(handle);
   frame->buffer_map.Set(handle, buffer);
   return buffer;
@@ -142,17 +149,15 @@ tvm::Type FuncRet(tvm::Type ret_type) {
   return ret_type;
 }
 
-tvm::tir::Buffer MatchBuffer(ObjectRef param, Array<PrimExpr> shape, DataType dtype,
-                             Optional<tvm::tir::Var> data, Array<PrimExpr> strides,
-                             PrimExpr elem_offset, String storage_scope, int align,
-                             int offset_factor, String buffer_type_str,
-                             Array<IntImm> axis_separators) {
-  using namespace tvm::tir;
-  tvm::tir::Buffer buffer = DeclBuffer(shape, dtype, "", data, strides, elem_offset, storage_scope,
-                                       align, offset_factor, buffer_type_str, axis_separators);
-  if (const auto* var = param.as<VarNode>()) {
+Buffer MatchBuffer(ObjectRef param, Array<PrimExpr> shape, DataType dtype,
+                   Optional<tvm::tir::Var> data, Array<PrimExpr> strides, PrimExpr elem_offset,
+                   String storage_scope, int align, int offset_factor, String buffer_type_str,
+                   Array<IntImm> axis_separators) {
+  Buffer buffer(shape, dtype, "", data, strides, elem_offset, storage_scope, align, offset_factor,
+                buffer_type_str, axis_separators);
+  if (const auto* var = param.as<tvm::tir::VarNode>()) {
     PrimFuncFrame frame = FindPrimFuncFrame("T.match_buffer");
-    Var v = GetRef<Var>(var);
+    tvm::tir::Var v = GetRef<tvm::tir::Var>(var);
     for (auto const& arg : frame->args) {
       if (arg.same_as(v)) {
         frame->buffer_map.Set(v, buffer);
@@ -160,33 +165,32 @@ tvm::tir::Buffer MatchBuffer(ObjectRef param, Array<PrimExpr> shape, DataType dt
       }
     }
     LOG(FATAL) << "ValueError: Can not bind non-input param to buffer.";
-  } else if (const auto* buffer_region = param.as<BufferRegionNode>()) {
+  } else if (const auto* buffer_region = param.as<tvm::tir::BufferRegionNode>()) {
     BlockFrame frame = FindBlockFrame("T.match_buffer");
-    frame->match_buffers.push_back(MatchBufferRegion(buffer, GetRef<BufferRegion>(buffer_region)));
+    frame->match_buffers.push_back(
+        tvm::tir::MatchBufferRegion(buffer->buffer, GetRef<tvm::tir::BufferRegion>(buffer_region)));
   } else {
     LOG(FATAL) << "ValueError: Unexpected type for TIR MatchBuffer.";
   }
   return buffer;
 };
 
-void PreflattenedBuffer(tvm::tir::Buffer postflattened_buffer, Array<PrimExpr> shape,
-                        DataType dtype, Optional<tvm::tir::Var> data, Array<PrimExpr> strides,
-                        PrimExpr elem_offset, String storage_scope, int align, int offset_factor,
-                        String buffer_type_str, Array<IntImm> axis_separators) {
-  using namespace tvm::tir;
+void PreflattenedBuffer(Buffer postflattened_buffer, Array<PrimExpr> shape, DataType dtype,
+                        Optional<tvm::tir::Var> data, Array<PrimExpr> strides, PrimExpr elem_offset,
+                        String storage_scope, int align, int offset_factor, String buffer_type_str,
+                        Array<IntImm> axis_separators) {
   PrimFuncFrame frame = FindPrimFuncFrame("T.preflattened_buffer");
   for (auto const& p : frame->buffer_map) {
     if (p.second.same_as(postflattened_buffer)) {
-      String buffer_name(postflattened_buffer->name + "_preflatten");
-      tvm::tir::Buffer buffer =
-          DeclBuffer(shape, dtype, buffer_name, data, strides, elem_offset, storage_scope, align,
-                     offset_factor, buffer_type_str, axis_separators);
+      String buffer_name(postflattened_buffer->buffer->name + "_preflatten");
+      Buffer buffer(shape, dtype, buffer_name, data, strides, elem_offset, storage_scope, align,
+                    offset_factor, buffer_type_str, axis_separators);
       Namer::Name(buffer, buffer_name);
       frame->preflattened_buffer_map.Set(p.first, buffer);
       return;
     }
   }
-  LOG(FATAL) << "ValueError: postflattened buffer " << postflattened_buffer->name
+  LOG(FATAL) << "ValueError: postflattened buffer " << postflattened_buffer->buffer->name
              << " does not exist.";
 };
 
@@ -199,7 +203,7 @@ TVM_REGISTER_GLOBAL("script.builder.tir.Arg")
         return Arg(name, GetRef<tvm::tir::Var>(var));
       }
       if (const auto* buffer = obj.as<BufferNode>()) {
-        return Arg(name, GetRef<tvm::tir::Buffer>(buffer));
+        return Arg(name, GetRef<Buffer>(buffer));
       }
       LOG(FATAL) << "ValueError: Unexpected type for TIR Arg: " << obj->GetTypeKey();
       throw;

@@ -23,7 +23,6 @@
 
 #include "./for_frame.h"
 #include "./utils.h"
-#include "./var.h"
 
 namespace tvm {
 namespace script {
@@ -47,9 +46,12 @@ BlockFrame Block(String name, bool no_realize) {
 }
 
 void BlockFrameNode::ExitWithScope() {
-  using namespace tvm::tir;
   TIRFrameNode::ExitWithScope();
-  tvm::tir::Block block(iter_vars, reads, writes, name, AsStmt(stmts), init, alloc_buffers,
+  Array<tvm::tir::Buffer> tir_alloc_buffers;
+  for (const Buffer& buffer : alloc_buffers) {
+    tir_alloc_buffers.push_back(buffer->buffer);
+  }
+  tvm::tir::Block block(iter_vars, reads, writes, name, AsStmt(stmts), init, tir_alloc_buffers,
                         match_buffers, annotations);
   if (no_realize) {
     CHECK(iter_values.empty())
@@ -57,7 +59,7 @@ void BlockFrameNode::ExitWithScope() {
     CHECK(!predicate.defined()) << "ValueError: `T.where` is not allowed when `no_realize=True`";
     AddToParent(block);
   } else {
-    AddToParent(BlockRealize(iter_values, predicate.value_or(Bool(true)), block));
+    AddToParent(tvm::tir::BlockRealize(iter_values, predicate.value_or(Bool(true)), block));
   }
 }
 
@@ -142,13 +144,11 @@ void BlockAttrs(Map<String, ObjectRef> attrs) {
   frame->annotations = attrs;
 }
 
-tvm::tir::Buffer AllocBuffer(Array<PrimExpr> shape, DataType dtype, Optional<tvm::tir::Var> data,
-                             Array<PrimExpr> strides, PrimExpr elem_offset, String storage_scope,
-                             int align, int offset_factor, String buffer_type_str,
-                             Array<IntImm> axis_separators) {
-  using namespace tvm::tir;
-  tvm::tir::Buffer buffer = DeclBuffer(shape, dtype, "", data, strides, elem_offset, storage_scope,
-                                       align, offset_factor, buffer_type_str, axis_separators);
+Buffer AllocBuffer(Array<PrimExpr> shape, DataType dtype, Optional<tvm::tir::Var> data,
+                   Array<PrimExpr> strides, PrimExpr elem_offset, String storage_scope, int align,
+                   int offset_factor, String buffer_type_str, Array<IntImm> axis_separators) {
+  Buffer buffer(shape, dtype, "", data, strides, elem_offset, storage_scope, align, offset_factor,
+                buffer_type_str, axis_separators);
   BlockFrame frame = FindBlockFrame("T.alloc_buffer");
   frame->alloc_buffers.push_back(buffer);
   return buffer;

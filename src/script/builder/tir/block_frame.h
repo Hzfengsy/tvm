@@ -20,6 +20,7 @@
 #define TVM_SCRIPT_BUILDER_TIR_BLOCK_FRAME_H_
 
 #include "./base.h"
+#include "./var.h"
 
 namespace tvm {
 namespace script {
@@ -33,7 +34,7 @@ class BlockFrameNode : public TIRFrameNode {
   Array<tvm::tir::BufferRegion> reads;
   Array<tvm::tir::BufferRegion> writes;
   Optional<tvm::tir::Stmt> init;
-  Array<tvm::tir::Buffer> alloc_buffers;
+  Array<Buffer> alloc_buffers;
   Array<tvm::tir::MatchBufferRegion> match_buffers;
   Map<String, ObjectRef> annotations;
 
@@ -93,12 +94,11 @@ void Where(PrimExpr predicate);
 void Reads(Array<ObjectRef> buffer_slices);
 void Writes(Array<ObjectRef> buffer_slices);
 void BlockAttrs(Map<String, ObjectRef> attrs);
-tvm::tir::Buffer AllocBuffer(Array<PrimExpr> shape, DataType dtype = DataType::Float(32),
-                             Optional<tvm::tir::Var> data = NullOpt, Array<PrimExpr> strides = {},
-                             PrimExpr elem_offset = PrimExpr(), String storage_scope = "",
-                             int align = -1, int offset_factor = 0,
-                             String buffer_type_str = "default",
-                             Array<IntImm> axis_separators = {});
+Buffer AllocBuffer(Array<PrimExpr> shape, DataType dtype = DataType::Float(32),
+                   Optional<tvm::tir::Var> data = NullOpt, Array<PrimExpr> strides = {},
+                   PrimExpr elem_offset = PrimExpr(), String storage_scope = "", int align = -1,
+                   int offset_factor = 0, String buffer_type_str = "default",
+                   Array<IntImm> axis_separators = {});
 
 namespace axis {
 tvm::tir::IterVar Spatial(Range dom, PrimExpr binding, DataType dtype = DataType::Int(32));

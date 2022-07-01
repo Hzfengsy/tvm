@@ -21,6 +21,7 @@
 
 #include "./base.h"
 #include "./block_frame.h"
+#include "./var.h"
 
 namespace tvm {
 namespace script {
@@ -32,8 +33,8 @@ class PrimFuncFrameNode : public TIRFrameNode {
   Optional<String> name;
   Array<tvm::tir::Var> args;
   Optional<Type> ret_type;
-  Map<tvm::tir::Var, tvm::tir::Buffer> buffer_map;
-  Map<tvm::tir::Var, tvm::tir::Buffer> preflattened_buffer_map;
+  Map<tvm::tir::Var, Buffer> buffer_map;
+  Map<tvm::tir::Var, Buffer> preflattened_buffer_map;
   Map<String, ObjectRef> attrs;
   BlockFrame root_block_frame{nullptr};
 
@@ -63,20 +64,18 @@ class PrimFuncFrame : public TIRFrame {
 
 PrimFuncFrame PrimFunc();
 tvm::tir::Var Arg(String name, tvm::tir::Var var);
-tvm::tir::Buffer Arg(String name, tvm::tir::Buffer buffer);
+Buffer Arg(String name, Buffer buffer);
 void FuncName(String name);
 void FuncAttrs(Map<String, ObjectRef> attrs);
 tvm::Type FuncRet(tvm::Type ret_type);
 
-tvm::tir::Buffer MatchBuffer(ObjectRef param, Array<PrimExpr> shape,
-                             DataType dtype = DataType::Float(32),
-                             Optional<tvm::tir::Var> data = NullOpt, Array<PrimExpr> strides = {},
-                             PrimExpr elem_offset = PrimExpr(), String storage_scope = "",
-                             int align = -1, int offset_factor = 0,
-                             String buffer_type_str = "default",
-                             Array<IntImm> axis_separators = {});
+Buffer MatchBuffer(ObjectRef param, Array<PrimExpr> shape, DataType dtype = DataType::Float(32),
+                   Optional<tvm::tir::Var> data = NullOpt, Array<PrimExpr> strides = {},
+                   PrimExpr elem_offset = PrimExpr(), String storage_scope = "", int align = -1,
+                   int offset_factor = 0, String buffer_type_str = "default",
+                   Array<IntImm> axis_separators = {});
 
-void PreflattenedBuffer(tvm::tir::Buffer postflattened_buffer, Array<PrimExpr> shape,
+void PreflattenedBuffer(Buffer postflattened_buffer, Array<PrimExpr> shape,
                         DataType dtype = DataType::Float(32),
                         Optional<tvm::tir::Var> data = NullOpt, Array<PrimExpr> strides = {},
                         PrimExpr elem_offset = PrimExpr(), String storage_scope = "",

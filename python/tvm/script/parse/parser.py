@@ -17,6 +17,7 @@
 """The core parser"""
 from typing import Any, Dict, List, Optional, Union
 
+from ...error import DiagnosticError
 from ..builder import def_
 from . import dispatch, doc
 from .diagnostics import Diagnostics
@@ -37,6 +38,8 @@ def _dispatch_wrapper(func: dispatch.ParseMethod) -> dispatch.ParseMethod:
     def _wrapper(self: Parser, node: doc.AST) -> None:
         try:
             return func(self, node)
+        except DiagnosticError:
+            raise
         except Exception as e:
             self.report_error(node, str(e))
             raise

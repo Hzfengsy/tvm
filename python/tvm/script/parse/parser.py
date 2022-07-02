@@ -33,12 +33,23 @@ DEFAULT_VISIT = {
 }
 
 
+def _dispatch_wrapper(func: dispatch.ParseMethod) -> dispatch.ParseMethod:
+    def _wrapper(self: Parser, node: doc.AST) -> None:
+        try:
+            return func(self, node)
+        except Exception as e:
+            self.report_error(node, str(e))
+            raise
+
+    return _wrapper
+
+
 def _dispatch(self: "Parser", type_name: str) -> dispatch.ParseMethod:
     for token in [self.dispatch_tokens[-1], "default"]:
         func = dispatch.get(token=token, type_name=type_name, default=None)
         if func is not None:
-            return func
-    return lambda self, node: self.generic_visit(node)
+            return _dispatch_wrapper(func)
+    return _dispatch_wrapper(lambda self, node: self.generic_visit(node))
 
 
 class Parser(doc.NodeVisitor):

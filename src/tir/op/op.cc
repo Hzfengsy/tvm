@@ -1000,6 +1000,8 @@ REGISTER_MAKE_BIT_OP(bitwise_xor, bitwise_xor);
 REGISTER_MAKE_BIT_OP(left_shift, left_shift);  // NOLINT(*)
 REGISTER_MAKE_BIT_OP(right_shift, right_shift);
 
+TVM_REGISTER_GLOBAL("tir._OpNot").set_body_typed(logical_not);
+
 TVM_REGISTER_GLOBAL("tir._OpIfThenElse")
     .set_body_typed([](PrimExpr cond, PrimExpr true_value, PrimExpr false_value, Span span) {
       return if_then_else(cond, true_value, false_value, span);

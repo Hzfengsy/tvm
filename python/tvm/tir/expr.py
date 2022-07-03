@@ -28,15 +28,16 @@ For example, you can use addexp.a to get the left operand of an Add node.
   assert(y.a == x)
 """
 from typing import Optional, Union
-from tvm import ir
-import tvm._ffi
-from tvm.ir.base import Span
 
-from tvm.runtime import Object, ObjectGeneric, DataType, DataTypeCode, const
-from tvm.ir import PrimExpr, Op
+import tvm._ffi
 import tvm.ir._ffi_api
-from . import generic as _generic
+from tvm import ir
+from tvm.ir import Op, PrimExpr
+from tvm.ir.base import Span
+from tvm.runtime import DataType, DataTypeCode, Object, ObjectGeneric, const
+
 from . import _ffi_api
+from . import generic as _generic
 
 
 def div_ambiguity_error():
@@ -65,8 +66,6 @@ def _dtype_is_float(value):
 
 class ExprOp(object):
     """Operator overloading for Expr like expressions."""
-
-    # TODO(tkonolige): use inspect to add source information to these objects
 
     def __add__(self, other):
         return _generic.add(self, other)
@@ -183,6 +182,21 @@ class ExprOp(object):
 
     def __bool__(self):
         return self.__nonzero__()
+
+    def __tvm_logical_not__(self):
+        return _ffi_api._OpNot(self, None)  # type: ignore
+
+    def __tvm_logical_and__(self, rhs):
+        return _ffi_api._OpAnd(self, rhs, None)  # type: ignore
+
+    def __tvm_logical_or__(self, rhs):
+        return _ffi_api._OpOr(self, rhs, None)  # type: ignore
+
+    def __tvm_r_logical_and__(self, lhs):
+        return _ffi_api._OpAnd(lhs, self, None)  # type: ignore
+
+    def __tvm_r_logical_or__(self, lhs):
+        return _ffi_api._OpOr(lhs, self, None)  # type: ignore
 
     def equal(self, other, span=None):
         """Build an equal check expression with other expr.

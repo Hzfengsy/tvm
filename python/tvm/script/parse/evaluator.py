@@ -16,7 +16,7 @@
 # under the License.
 """AST Evaluation"""
 import ast
-from typing import TYPE_CHECKING, Any, Dict, Optional, Union
+from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional, Union
 
 from . import doc
 
@@ -48,6 +48,26 @@ class ExprEvaluator:
             return result.value
         raise TypeError("Unexpected result type: %s" % type(result))
 
+    def _add_intermediate_result(self, value: Any) -> doc.Name:
+        name = f"__tvm_tmp_value_{self.new_value_count}"
+        self.new_value_count += 1
+        self.value_table[name] = value
+        lineno = 0
+        col_offset = 0
+        return doc.Name(
+            id=name,
+            ctx=doc.Load(
+                lineno=lineno,
+                col_offset=col_offset,
+                end_lineno=None,
+                end_col_offset=None,
+            ),
+            lineno=lineno,
+            col_offset=col_offset,
+            end_lineno=None,
+            end_col_offset=None,
+        )
+
     def _visit(self, node: doc.AST) -> Any:
         if isinstance(node, list):
             return [self._visit(n) for n in node]
@@ -71,34 +91,73 @@ class ExprEvaluator:
             ),
         ):
             return node
-        new_fields = {}
+        fields = {}
         for field in node.__class__._FIELDS:  # pylint: disable=protected-access
             attr = getattr(node, field)
             if isinstance(attr, (doc.AST, tuple, list)):
-                new_fields[field] = self._visit(attr)
+                fields[field] = self._visit(attr)
             else:
-                new_fields[field] = attr
+                fields[field] = attr
         try:
-            new_value = _eval_expr(node.__class__(**new_fields), self.value_table)
+            if isinstance(node, doc.BoolOp) and isinstance(fields["op"], doc.And):
+                value = self._eval_binary(
+                    fields["values"],
+                    lhs_func_name="__tvm_logical_and__",
+                    rhs_func_name="__tvm_r_logical_and__",
+                    default_func=lambda lhs, rhs: lhs and rhs,
+                )
+            elif isinstance(node, doc.BoolOp) and isinstance(fields["op"], doc.Or):
+                value = self._eval_binary(
+                    fields["values"],
+                    lhs_func_name="__tvm_logical_or__",
+                    rhs_func_name="__tvm_r_logical_or__",
+                    default_func=lambda lhs, rhs: lhs or rhs,
+                )
+            elif isinstance(node, doc.UnaryOp) and isinstance(fields["op"], doc.Not):
+                value = self._eval_unary(
+                    fields["operand"],
+                    func_name="__tvm_logical_not__",
+                    default_func=lambda v: not v,
+                )
+            else:
+                value = _eval_expr(node.__class__(**fields), self.value_table)
         except Exception as e:
             self.parser.report_error(node, str(e))
-        else:
-            name = f"__tvm_tmp_value_{self.new_value_count}"
-            self.new_value_count += 1
-            self.value_table[name] = new_value
-            return doc.Name(
-                id=name,
-                ctx=doc.Load(
-                    lineno=node.lineno,
-                    col_offset=node.col_offset,
-                    end_lineno=node.end_lineno,
-                    end_col_offset=node.end_col_offset,
-                ),
-                lineno=node.lineno,
-                col_offset=node.col_offset,
-                end_lineno=node.end_lineno,
-                end_col_offset=node.end_col_offset,
-            )
+        return self._add_intermediate_result(value)
+
+    def _eval_unary(
+        self,
+        value: Any,
+        func_name: str,
+        default_func: Callable,
+    ):
+        value = _eval_expr(value, self.value_table)
+        method = getattr(value, func_name, None)
+        if method is not None:
+            return method(value)
+        return default_func(value)
+
+    def _eval_binary(
+        self,
+        values: List[Any],
+        lhs_func_name: str,
+        rhs_func_name: str,
+        default_func: Callable,
+    ):
+        assert len(values) > 0
+        values = [_eval_expr(v, self.value_table) for v in values if v is not None]
+        lhs = values[0]
+        for rhs in values[1:]:
+            method = getattr(lhs, lhs_func_name, None)
+            if method is not None:
+                lhs = method(rhs)
+                continue
+            method = getattr(rhs, rhs_func_name, None)
+            if method is not None:
+                lhs = method(lhs)
+                continue
+            lhs = default_func(lhs, rhs)
+        return lhs
 
 
 def eval_expr(

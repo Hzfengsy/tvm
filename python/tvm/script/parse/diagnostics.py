@@ -28,7 +28,7 @@ class Diagnostics:
 
     def __init__(self, source: Source):
         mod = IRModule()
-        mod.source_map.add(source.source_name, source.source)
+        mod.source_map.add(source.source_name, source.full_source)
         self.source = source
         self.ctx = diagnostics.DiagnosticContext(mod, diagnostics.get_renderer())
 
@@ -37,6 +37,10 @@ class Diagnostics:
         col_offset = node.col_offset
         end_lineno = node.end_lineno or lineno
         end_col_offset = node.end_col_offset or col_offset
+        lineno += self.source.start_line - 1
+        end_lineno += self.source.start_line - 1
+        col_offset += self.source.start_column + 1
+        end_col_offset += self.source.start_column + 1
         self.ctx.emit(
             diagnostics.Diagnostic(
                 level=level,
@@ -44,8 +48,8 @@ class Diagnostics:
                     source_name=SourceName(self.source.source_name),
                     line=lineno,
                     end_line=end_lineno,
-                    column=col_offset + 1,
-                    end_column=end_col_offset + 1,
+                    column=col_offset,
+                    end_column=end_col_offset,
                 ),
                 message=message,
             )

@@ -17,10 +17,11 @@
 """TVM Script TIR Prim Func Frame"""
 import inspect
 from typing import Any, Callable, Dict, Optional, Union
+from numbers import Integral
 
 from tvm._ffi import register_object as _register_object
 from tvm.ir import Type
-from tvm.tir import Buffer, PrimFunc
+from tvm.tir import Buffer, PrimFunc, PrimExpr
 from tvm.tir.expr import Var
 
 from . import _ffi_api
@@ -87,6 +88,7 @@ def match_buffer(
     buffer_type="default",
     axis_separators=None,
 ) -> Buffer:
+    shape = (shape,) if isinstance(shape, (PrimExpr, Integral)) else shape
     return _ffi_api.MatchBuffer(  # pylint: disable=no-member # type: ignore
         param,
         shape,
@@ -109,12 +111,13 @@ def preflattened_buffer(
     data=None,
     strides=[],
     elem_offset=None,
-    storage_scope="",
+    scope="",
     align=-1,
     offset_factor=0,
     buffer_type="default",
     axis_separators=None,
 ) -> None:
+    shape = (shape,) if isinstance(shape, (PrimExpr, Integral)) else shape
     _ffi_api.PreflattenedBuffer(  # pylint: disable=no-member # type: ignore
         postflattened,
         shape,
@@ -122,7 +125,7 @@ def preflattened_buffer(
         data,
         strides,
         elem_offset,
-        storage_scope,
+        scope,
         align,
         offset_factor,
         buffer_type,

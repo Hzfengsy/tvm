@@ -16,9 +16,10 @@
 # under the License.
 """TVM Script TIR Block Frame"""
 from typing import Any, Dict, List, Union
+from numbers import Integral
 
 from tvm._ffi import register_object as _register_object
-from tvm.tir import Buffer, BufferLoad, BufferRegion
+from tvm.tir import Buffer, BufferLoad, BufferRegion, PrimExpr
 
 from . import _ffi_api
 from .base import TIRFrame
@@ -34,7 +35,7 @@ class BlockInitFrame(TIRFrame):
     ...
 
 
-def block(name: str, no_realize: bool = False) -> BlockFrame:
+def block(name: str = "", no_realize: bool = False) -> BlockFrame:
     return _ffi_api.BlockFrame(name, no_realize)  # pylint: disable=no-member # type: ignore
 
 
@@ -82,19 +83,20 @@ def alloc_buffer(
     data=None,
     strides=[],
     elem_offset=None,
-    storage_scope="",
+    scope="",
     align=-1,
     offset_factor=0,
     buffer_type="default",
     axis_separators=None,
 ) -> Buffer:
+    shape = (shape,) if isinstance(shape, (PrimExpr, Integral)) else shape
     return _ffi_api.AllocBuffer(
         shape,
         dtype,
         data,
         strides,
         elem_offset,
-        storage_scope,
+        scope,
         align,
         offset_factor,
         buffer_type,

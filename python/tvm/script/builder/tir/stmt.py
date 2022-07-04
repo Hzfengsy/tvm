@@ -98,12 +98,12 @@ def let(var: Var, value: PrimExpr) -> LetFrame:
 def allocate(
     extents: List[PrimExpr],
     dtype: str,
-    storage_scope: str = "",
+    scope: str = "",
     condition: PrimExpr = None,
     annotations=None,
 ) -> AllocateFrame:
     return _ffi_api.AllocateFrame(
-        extents, dtype, storage_scope, condition, annotations
+        extents, dtype, scope, condition, annotations
     )  # pylint: disable=no-member # type: ignore
 
 
@@ -160,4 +160,6 @@ def prefetch(buffer: Buffer, indices: List[PrimExpr]) -> None:
 
 
 def evaluate(value: PrimExpr) -> None:
+    if isinstance(value, str):
+        value = StringImm(value)
     return _ffi_api.Evaluate(value)  # pylint: disable=no-member # type: ignore

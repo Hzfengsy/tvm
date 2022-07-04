@@ -18,61 +18,71 @@
 
 from tvm.tir.expr import Broadcast, Ramp as ramp, Select, Shuffle
 from tvm.tir.generic import cast
-from tvm.tir.op import (
-    abs,
-    acos,
-    acosh,
-    asin,
-    asinh,
-    atan,
-    atan2,
-    atanh,
-    call_extern,
-    call_packed,
-    ceil,
-    clz,
-    comm_reducer,
-    copysign,
-    cos,
-    cosh,
-    erf,
-    exp,
-    exp2,
-    exp10,
-    floor,
-    floordiv,
-    floormod,
-    fmod,
-    hypot,
-    if_then_else as if_then_else_,
-    infinity,
-    isfinite,
-    isinf,
-    isnan,
-    ldexp,
-    log,
-    log1p,
-    log2,
-    log10,
-    max_value,
-    min_value,
-    nearbyint,
-    nextafter,
-    popcount,
-    power,
-    reinterpret,
-    round,
-    rsqrt,
-    sigmoid,
-    sin,
-    sinh,
-    sqrt,
-    tan,
-    tanh,
-    trunc,
-    truncdiv,
-    truncmod,
-)
+from tvm.tir import op
+
+
+def op_wrapper(func):
+    def wrapped(*args, **kwargs):
+        if "dtype" in kwargs:
+            kwargs.pop("dtype")
+        return func(*args, **kwargs)
+
+    return wrapped
+
+
+abs = op_wrapper(op.abs)
+acos = op_wrapper(op.acos)
+acosh = op_wrapper(op.acosh)
+asin = op_wrapper(op.asin)
+asinh = op_wrapper(op.asinh)
+atan = op_wrapper(op.atan)
+atan2 = op_wrapper(op.atan2)
+atanh = op_wrapper(op.atanh)
+call_extern = op_wrapper(op.call_extern)
+call_packed = op_wrapper(op.call_packed)
+ceil = op_wrapper(op.ceil)
+clz = op_wrapper(op.clz)
+comm_reducer = op_wrapper(op.comm_reducer)
+copysign = op_wrapper(op.copysign)
+cos = op_wrapper(op.cos)
+cosh = op_wrapper(op.cosh)
+erf = op_wrapper(op.erf)
+exp = op_wrapper(op.exp)
+exp2 = op_wrapper(op.exp2)
+exp10 = op_wrapper(op.exp10)
+floor = op_wrapper(op.floor)
+floordiv = op_wrapper(op.floordiv)
+floormod = op_wrapper(op.floormod)
+fmod = op_wrapper(op.fmod)
+hypot = op_wrapper(op.hypot)
+if_then_else = op_wrapper(op.if_then_else)
+infinity = op_wrapper(op.infinity)
+isfinite = op_wrapper(op.isfinite)
+isinf = op_wrapper(op.isinf)
+isnan = op_wrapper(op.isnan)
+ldexp = op_wrapper(op.ldexp)
+log = op_wrapper(op.log)
+log1p = op_wrapper(op.log1p)
+log2 = op_wrapper(op.log2)
+log10 = op_wrapper(op.log10)
+max_value = op_wrapper(op.max_value)
+min_value = op_wrapper(op.min_value)
+nearbyint = op_wrapper(op.nearbyint)
+nextafter = op_wrapper(op.nextafter)
+popcount = op_wrapper(op.popcount)
+power = op_wrapper(op.power)
+reinterpret = op_wrapper(op.reinterpret)
+round = op_wrapper(op.round)
+rsqrt = op_wrapper(op.rsqrt)
+sigmoid = op_wrapper(op.sigmoid)
+sin = op_wrapper(op.sin)
+sinh = op_wrapper(op.sinh)
+sqrt = op_wrapper(op.sqrt)
+tan = op_wrapper(op.tan)
+tanh = op_wrapper(op.tanh)
+trunc = op_wrapper(op.trunc)
+truncdiv = op_wrapper(op.truncdiv)
+truncmod = op_wrapper(op.truncmod)
 
 from . import _ffi_api
 
@@ -131,10 +141,6 @@ def boolean(expr=None):
 
 def handle():
     return _ffi_api.Handle()
-
-
-def if_then_else(cond, t, f, dtype=None):
-    return if_then_else_(cond, t, f)
 
 
 def min(a, b):

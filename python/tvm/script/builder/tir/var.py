@@ -15,6 +15,8 @@
 # specific language governing permissions and limitations
 # under the License.
 """TVM Script TIR Buffer"""
+from numbers import Integral
+
 from tvm._ffi import register_object as _register_object
 from tvm.ir import Array, PrimExpr, Range
 from tvm.runtime import DataType, Object
@@ -39,6 +41,7 @@ class Buffer_(Object):
         buffer_type="",
         axis_separators=None,
     ) -> None:
+        shape = (shape,) if isinstance(shape, (PrimExpr, Integral)) else shape
         self.__init_handle_by_constructor__(
             _ffi_api.Buffer,
             shape,
@@ -142,5 +145,32 @@ class BufferProxy:
         return self(*keys)  # pylint: disable=no-member # type: ignore
 
 
-buffer_decl = Buffer_
+def buffer_decl(
+    shape,
+    dtype="float32",
+    name="buffer",
+    data=None,
+    strides=None,
+    elem_offset=None,
+    scope="",
+    alignment=0,
+    offset_factor=0,
+    buffer_type="",
+    axis_separators=None,
+) -> Buffer_:
+    return Buffer_(
+        shape,
+        dtype,
+        name,
+        data,
+        strides,
+        elem_offset,
+        scope,
+        alignment,
+        offset_factor,
+        buffer_type,
+        axis_separators,
+    )
+
+
 Buffer = BufferProxy()

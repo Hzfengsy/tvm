@@ -30,16 +30,24 @@ def op_wrapper(func):
     return wrapped
 
 
+def dtype_forward(func):
+    def forwarded(*args, **kwargs):
+        if "dtype" in kwargs:
+            args = (kwargs.pop("dtype"),) + args
+        return func(*args, **kwargs)
+
+    return forwarded
+
+
 abs = op_wrapper(op.abs)
 acos = op_wrapper(op.acos)
 acosh = op_wrapper(op.acosh)
+address_of = op_wrapper(op.address_of)
 asin = op_wrapper(op.asin)
 asinh = op_wrapper(op.asinh)
 atan = op_wrapper(op.atan)
 atan2 = op_wrapper(op.atan2)
 atanh = op_wrapper(op.atanh)
-call_extern = op_wrapper(op.call_extern)
-call_packed = op_wrapper(op.call_packed)
 ceil = op_wrapper(op.ceil)
 clz = op_wrapper(op.clz)
 comm_reducer = op_wrapper(op.comm_reducer)
@@ -60,17 +68,22 @@ infinity = op_wrapper(op.infinity)
 isfinite = op_wrapper(op.isfinite)
 isinf = op_wrapper(op.isinf)
 isnan = op_wrapper(op.isnan)
+isnullptr = op_wrapper(op.isnullptr)
 ldexp = op_wrapper(op.ldexp)
+likely = op_wrapper(op.likely)
 log = op_wrapper(op.log)
 log1p = op_wrapper(op.log1p)
 log2 = op_wrapper(op.log2)
 log10 = op_wrapper(op.log10)
+lookup_param = op_wrapper(op.lookup_param)
 max_value = op_wrapper(op.max_value)
 min_value = op_wrapper(op.min_value)
 nearbyint = op_wrapper(op.nearbyint)
 nextafter = op_wrapper(op.nextafter)
 popcount = op_wrapper(op.popcount)
 power = op_wrapper(op.power)
+q_multiply_shift = op_wrapper(op.q_multiply_shift)
+ret = op_wrapper(op.ret)
 reinterpret = op_wrapper(op.reinterpret)
 round = op_wrapper(op.round)
 rsqrt = op_wrapper(op.rsqrt)
@@ -83,6 +96,14 @@ tanh = op_wrapper(op.tanh)
 trunc = op_wrapper(op.trunc)
 truncdiv = op_wrapper(op.truncdiv)
 truncmod = op_wrapper(op.truncmod)
+
+call_cpacked = dtype_forward(op.call_cpacked)
+call_extern = dtype_forward(op.call_extern)
+call_intrin = dtype_forward(op.call_intrin)
+call_llvm_intrin = dtype_forward(op.call_llvm_intrin)
+call_llvm_pure_intrin = dtype_forward(op.call_llvm_pure_intrin)
+call_packed = dtype_forward(op.call_packed)
+call_pure_extern = dtype_forward(op.call_pure_extern)
 
 from . import _ffi_api
 

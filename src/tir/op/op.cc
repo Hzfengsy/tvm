@@ -97,6 +97,17 @@ PrimExpr q_multiply_shift(PrimExpr x, PrimExpr y, PrimExpr q, PrimExpr s, Span s
                    {x, y, q, s}, span);
 }
 
+// address_of
+PrimExpr address_of(tir::BufferLoad buffer_load, Span span) {
+  return tir::Call(DataType::Handle(), tir::builtin::address_of(), {buffer_load}, span);
+}
+
+// lookup_param
+PrimExpr lookup_param(String param_name, Span span) {
+  return tir::Call(DataType::Handle(), tir::builtin::lookup_param(), {tir::StringImm(param_name)},
+                   span);
+}
+
 // The public function with a quick checking path.
 void BinaryOpMatchTypes(PrimExpr& lhs, PrimExpr& rhs, Span span) {  // NOLINT(*)
   CHECK(lhs.defined()) << "ValueError: `lhs` is null in the binary operator";
@@ -702,6 +713,11 @@ PrimExpr isnan(PrimExpr x, Span span) {
   }
 }
 
+// isnullptr
+PrimExpr isnullptr(PrimExpr x, Span span) {
+  return tir::Call(DataType::Bool(1), tir::builtin::isnullptr(), {x}, span);
+}
+
 // isinf
 PrimExpr isinf(PrimExpr x, Span span) {
   DataType t = DataType::Bool(x.dtype().lanes());
@@ -930,6 +946,8 @@ TVM_REGISTER_GLOBAL("tir.min_value").set_body_typed(min_value);
 TVM_REGISTER_GLOBAL("tir.max_value").set_body_typed(max_value);
 
 TVM_REGISTER_GLOBAL("tir.abs").set_body_typed(tvm::abs);
+
+TVM_REGISTER_GLOBAL("tir.likely").set_body_typed(tvm::likely);
 
 TVM_REGISTER_GLOBAL("tir.isnan").set_body_typed(tvm::isnan);
 

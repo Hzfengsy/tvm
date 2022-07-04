@@ -260,6 +260,47 @@ def call_llvm_pure_intrin(dtype, name, *args, span=None):
     )
 
 
+def address_of(buffer_load, span=None):
+    """Returns the address of an element in the buffer
+
+    Parameters
+    ----------
+    dtype : str
+        The data type of the result.
+
+    buffer_load: BufferLoad
+        The buffer load.
+
+    span : Optional[Span]
+        The location of this operator in the source code.
+
+    Returns
+    -------
+    call : PrimExpr
+        The call expression.
+    """
+    return call_intrin("handle", "tir.address_of", buffer_load)
+
+
+def lookup_param(param_name, span=None):
+    """Returns the param by name
+
+    Parameters
+    ----------
+    param_name : str
+        The name of param.
+
+    span : Optional[Span]
+        The location of this operator in the source code.
+
+    Returns
+    -------
+    call : PrimExpr
+        The call expression.
+    """
+    return call_intrin("handle", "tir.lookup_param", param_name)
+
+
 def ret(val):
     """Create a tir return expression
 
@@ -1049,6 +1090,25 @@ def ldexp(x1, x2):
     return call_intrin(x1.dtype, "tir.ldexp", x1, x2)  # type: ignore
 
 
+def likely(cond, span=None):
+    """Mark condition as likely.
+
+    Parameters
+    ----------
+    cond : PrimExpr
+        Input argument.
+
+    span : Optional[Span]
+        The location of this operator in the source code.
+
+    Returns
+    -------
+    y : PrimExpr
+        The marked expression.
+    """
+    return _ffi_api.likely(cond, span)  # type: ignore
+
+
 def isnan(x, span=None):
     """Check if input value is Nan.
 
@@ -1066,6 +1126,25 @@ def isnan(x, span=None):
         The result.
     """
     return _ffi_api.isnan(x, span)  # type: ignore
+
+
+def isnullptr(x, span=None):
+    """Check if input value is nullptr.
+
+    Parameters
+    ----------
+    x : PrimExpr
+        Input argument.
+
+    span : Optional[Span]
+        The location of this operator in the source code.
+
+    Returns
+    -------
+    y : PrimExpr
+        The result.
+    """
+    return call_intrin("bool", "tir.isnullptr", x)  # type: ignore
 
 
 def isfinite(x, span=None):

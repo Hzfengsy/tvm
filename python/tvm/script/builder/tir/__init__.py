@@ -39,7 +39,7 @@ from .prim_func_frame import (
     preflattened_buffer,
     prim_func,
 )
-from .var import Buffer, buffer_decl
+from .var import Buffer, buffer_decl, var
 from .stmt import (
     Assert,
     let,

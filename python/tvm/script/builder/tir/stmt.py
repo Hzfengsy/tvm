@@ -126,6 +126,8 @@ def realize(
 
 
 def attr(node: Object, attr_key: str, value: Union[PrimExpr, str]) -> AttrFrame:
+    if isinstance(node, str):
+        node = StringImm(node)
     if isinstance(value, str):
         value = StringImm(value)
     return _ffi_api.AttrFrame(node, attr_key, value)  # pylint: disable=no-member # type: ignore

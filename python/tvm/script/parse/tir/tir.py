@@ -120,4 +120,7 @@ def visit_tvm_annotation(self: Parser, node: doc.expr):
 
 @dispatch.register(token="tir", type_name="Expr")
 def visit_expr_stmt(self: Parser, node: doc.Expr) -> None:
-    self.eval_expr(node.value)
+    res = self.eval_expr(node.value)
+    if isinstance(res, Frame):
+        res.add_callback(partial(res.__exit__, None, None, None))
+        res.__enter__()

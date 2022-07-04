@@ -46,15 +46,29 @@ def where(predicate) -> None:
     _ffi_api.Where(predicate)  # pylint: disable=no-member # type: ignore
 
 
-def reads(buffer_slices: List[Union[BufferRegion, BufferLoad]]) -> None:
-    if not isinstance(buffer_slices, List):
-        buffer_slices = [buffer_slices]
+def reads(*buffer_slices: List[Union[BufferRegion, BufferLoad]]) -> None:
+    if len(buffer_slices) == 1:
+        if isinstance(buffer_slices[0], tuple):
+            buffer_slices = list(buffer_slices[0])
+        elif isinstance(buffer_slices[0], list):
+            buffer_slices = buffer_slices[0]
+        else:
+            buffer_slices = [buffer_slices[0]]
+    else:
+        buffer_slices = list(buffer_slices)
     _ffi_api.Reads(buffer_slices)
 
 
-def writes(buffer_slices: List[Union[BufferRegion, BufferLoad]]) -> None:
-    if not isinstance(buffer_slices, List):
-        buffer_slices = [buffer_slices]
+def writes(*buffer_slices: List[Union[BufferRegion, BufferLoad]]) -> None:
+    if len(buffer_slices) == 1:
+        if isinstance(buffer_slices[0], tuple):
+            buffer_slices = list(buffer_slices[0])
+        elif isinstance(buffer_slices[0], list):
+            buffer_slices = buffer_slices[0]
+        else:
+            buffer_slices = [buffer_slices[0]]
+    else:
+        buffer_slices = list(buffer_slices)
     _ffi_api.Writes(buffer_slices)
 
 

@@ -51,7 +51,13 @@ def visit_assign(self: Parser, node: doc.Assign) -> None:
         res = rhs.__enter__()
         self.eval_assign(target=lhs, source=res)
     elif isinstance(lhs, doc.Subscript):
-        T.buffer_store(self.eval_expr(lhs.value), rhs, self.eval_expr(lhs.slice))
+        if isinstance(lhs.slice, doc.Tuple):
+            indices = []
+            for index in lhs.slice.elts:
+                indices.append(self.eval_expr(index))
+        else:
+            indices = [self.eval_expr(lhs.slice)]
+        T.buffer_store(self.eval_expr(lhs.value), rhs, indices)
     else:
         self.eval_assign(target=lhs, source=rhs)
 

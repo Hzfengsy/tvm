@@ -16,7 +16,7 @@
 # under the License.
 """TVM Script TIR Op"""
 
-from tvm.tir.expr import Broadcast, Ramp, Select, Shuffle
+from tvm.tir.expr import Broadcast, Ramp as ramp, Select, Shuffle
 from tvm.tir.generic import cast
 from tvm.tir.op import (
     abs,
@@ -44,7 +44,7 @@ from tvm.tir.op import (
     floormod,
     fmod,
     hypot,
-    if_then_else,
+    if_then_else as if_then_else_,
     infinity,
     isfinite,
     isinf,
@@ -131,6 +131,10 @@ def boolean(expr=None):
 
 def handle():
     return _ffi_api.Handle()
+
+
+def if_then_else(cond, t, f, dtype=None):
+    return if_then_else_(cond, t, f)
 
 
 def min(a, b):

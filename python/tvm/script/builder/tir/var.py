@@ -142,4 +142,5 @@ class BufferProxy:
         return self(*keys)  # pylint: disable=no-member # type: ignore
 
 
+buffer_decl = Buffer_
 Buffer = BufferProxy()

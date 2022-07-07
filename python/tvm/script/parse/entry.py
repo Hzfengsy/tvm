@@ -23,12 +23,7 @@ from .parser import Parser
 from .source import Source
 
 
-def parse(program: Union[doc.AST, Any, str]):
-    from tvm.script.builder import tir as T  # pylint: disable=import-outside-toplevel
-
-    extra_vars = {  # TODO: `extra_vars` is a hack
-        "T": T,
-    }
+def parse(program: Union[doc.AST, Any, str], extra_vars=None):
     source = Source(program)
     parser = Parser(source)
     with Builder() as builder:

@@ -14,7 +14,6 @@
 # KIND, either express or implied.  See the License for the
 # specific language governing permissions and limitations
 # under the License.
-from ...builder import Frame
 from ...builder import ir as I
 from .. import dispatch, doc
 from ..parser import Parser

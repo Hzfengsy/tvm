@@ -15,17 +15,15 @@
 # specific language governing permissions and limitations
 # under the License.
 """The core parser"""
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Callable, Dict, List, Optional, Union
 
 from ...error import DiagnosticError
-from ..builder import def_
 from . import dispatch, doc
 from .diagnostics import Diagnostics
 from .evaluator import eval_assign, eval_expr
 from .source import Source
 from .utils import deferred
 from .var_table import VarTable
-from typing import Callable
 
 DEFAULT_VISIT = {
     "Interactive",
@@ -99,7 +97,7 @@ class Parser(doc.NodeVisitor):
         self,
         target: doc.expr,
         source: Any,
-        bind_value: Callable[[str, Any], Any],
+        bind_value: Callable[["Parser", str, Any], Any],
     ) -> Dict[str, Any]:
         var_values = eval_assign(self, target, source)
         for k, v in var_values.items():

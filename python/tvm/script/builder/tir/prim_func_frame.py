@@ -16,12 +16,12 @@
 # under the License.
 """TVM Script TIR Prim Func Frame"""
 import inspect
-from typing import Any, Callable, Dict, Optional, Union
 from numbers import Integral
+from typing import Any, Callable, Dict, Optional, Union
 
 from tvm._ffi import register_object as _register_object
 from tvm.ir import Type
-from tvm.tir import Buffer, PrimFunc, PrimExpr
+from tvm.tir import Buffer, PrimExpr, PrimFunc
 from tvm.tir.expr import Var
 
 from . import _ffi_api
@@ -38,21 +38,28 @@ def _is_defined_in_class(frames):
         maybe_class_frame = frames[2]
         statement_list = maybe_class_frame[4]
         first_statement = statement_list[0]
-        if first_statement.strip().startswith("class "):
+        line = first_statement.strip()
+        if line.startswith("class "):
+            return True
+        if line.startswith("@") and "ir_module" in line:
             return True
     return False
 
 
 def prim_func(f: Optional[Callable] = None) -> Union[PrimFuncFrame, PrimFunc, Callable]:
     if f is not None:
-        from tvm.script.parse import parse  # pylint: disable=import-outside-toplevel
+        # pylint: disable=import-outside-toplevel
+        from tvm.script.parse import parse
+        from tvm.script.parse.utils import inspect_function_capture
+
+        # pylint: enable=import-outside-toplevel
 
         if not inspect.isfunction(f):
             raise TypeError(f"Expect a function, but got: {f}")
 
         if _is_defined_in_class(inspect.stack()):
             return f
-        return parse(f)
+        return parse(f, inspect_function_capture(f))
     return _ffi_api.PrimFunc()  # pylint: disable=no-member # type: ignore
 
 

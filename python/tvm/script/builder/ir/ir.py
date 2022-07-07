@@ -33,12 +33,16 @@ class IRModuleFrame(Frame):
 
 def ir_module(f: Optional[Type] = None) -> Union[IRModuleFrame, IRModule]:
     if f is not None:
-        from tvm.script.parse import parse  # pylint: disable=import-outside-toplevel
+        # pylint: disable=import-outside-toplevel
+        from tvm.script.parse import parse
+        from tvm.script.parse.utils import inspect_class_capture
+
+        # pylint: enable=import-outside-toplevel
 
         if not inspect.isclass(f):
             raise TypeError(f"Expect a class, but got: {f}")
 
-        return parse(f)
+        return parse(f, inspect_class_capture(f))
     return _ffi_api.IRModule()  # pylint: disable=no-member # type: ignore
 
 

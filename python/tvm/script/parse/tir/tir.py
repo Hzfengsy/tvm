@@ -16,17 +16,15 @@
 # under the License.
 
 import contextlib
+from functools import partial
+from typing import Any
+
+from tvm.tir import IterVar, PrimExpr, Var
 
 from ...builder import Frame, def_
 from ...builder import tir as T
 from .. import dispatch, doc
 from ..parser import Parser
-
-from functools import partial
-
-from tvm.ir import Array
-from tvm.tir import PrimExpr, Var, IterVar
-from typing import Any
 
 
 def bind_value(self: Parser, name: str, value: Any) -> Any:

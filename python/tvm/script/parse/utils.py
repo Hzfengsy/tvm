@@ -14,8 +14,9 @@
 # KIND, either express or implied.  See the License for the
 # specific language governing permissions and limitations
 # under the License.
+import inspect
 from contextlib import contextmanager
-from typing import Callable
+from typing import Any, Callable, Dict
 
 
 def deferred(f: Callable[[], None]):
@@ -27,3 +28,33 @@ def deferred(f: Callable[[], None]):
             f()
 
     return context()
+
+
+def inspect_function_capture(func: Callable) -> Dict[str, Any]:
+    PREFIX = "tvm.script.builder."
+    vars = {}
+    closure_vars = inspect.getclosurevars(func)
+    captured = {**closure_vars.nonlocals, **closure_vars.globals}
+    for k, v in captured.items():
+        # Case 1: a moduel like `T` or `tvm.script.builder.tir`
+        if inspect.ismodule(v) and v.__name__.startswith(PREFIX):
+            vars[k] = v
+            continue
+        # Case 2: a function like `T.match_buffer`
+        if hasattr(v, "__module__") and v.__module__.startswith(PREFIX):
+            vars[k] = v
+            continue
+        # Case 3: atomic types
+        if v is None or isinstance(v, (int, float, str, bool)):
+            vars[k] = v
+            continue
+    return vars
+
+
+def inspect_class_capture(cls: type) -> Dict[str, Any]:
+    vars: Dict[str, Any] = {}
+    for _, v in cls.__dict__.items():
+        if inspect.isfunction(v):
+            func_vars = inspect_function_capture(v)
+            vars.update(**func_vars)
+    return vars

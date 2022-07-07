@@ -27,7 +27,7 @@ namespace script {
 namespace builder {
 namespace tir {
 
-tvm::tir::BufferRegion BufferRegionFromLoad(tvm::tir::BufferLoad buffer_load) {
+inline tvm::tir::BufferRegion BufferRegionFromLoad(tvm::tir::BufferLoad buffer_load) {
   using namespace tvm::tir;
   Array<Range> ranges;
   for (const PrimExpr& index : buffer_load->indices) {

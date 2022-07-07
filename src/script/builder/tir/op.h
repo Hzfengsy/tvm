@@ -94,6 +94,10 @@ inline PrimExpr Boolean(Optional<PrimExpr> expr = NullOpt) {
   return expr.defined() ? tvm::cast(dtype, expr.value()) : tvm::tir::Var("", dtype);
 }
 
+inline PrimExpr Ptr(Type type, String storate_scope = "global") {
+  return tvm::tir::Var("", tvm::PointerType(type, storate_scope));
+}
+
 inline tvm::tir::Var Handle() { return tvm::tir::Var("", DataType::Handle()); }
 
 inline PrimExpr PrimType(DataType dtype, PrimExpr expr) { return tvm::cast(dtype, expr); }

@@ -21,7 +21,7 @@ from tvm.tir import IterVar
 
 from . import _ffi_api
 
-from typing import List
+from typing import List, Union
 
 
 def spatial(dom, binding, dtype="int32") -> IterVar:
@@ -48,8 +48,11 @@ def opaque(dom, binding, dtype="int32") -> IterVar:
     return _ffi_api.AxisOpaque(dom, binding, dtype)  # pylint: disable=no-member # type: ignore
 
 
-def remap(kinds, bindings, dtype="int32") -> List[IterVar]:
-    return _ffi_api.AxisRemap(kinds, bindings, dtype)  # pylint: disable=no-member # type: ignore
+def remap(kinds, bindings, dtype="int32") -> Union[List[IterVar], IterVar]:
+    iter_vars = _ffi_api.AxisRemap(kinds, bindings, dtype)
+    return (
+        iter_vars[0] if len(iter_vars) == 1 else iter_vars
+    )  # pylint: disable=no-member # type: ignore
 
 
 S = spatial

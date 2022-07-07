@@ -17,12 +17,36 @@
 
 import contextlib
 
-from ...builder import Frame
+from ...builder import Frame, def_
 from ...builder import tir as T
 from .. import dispatch, doc
 from ..parser import Parser
 
 from functools import partial
+
+from tvm.ir import Array
+from tvm.tir import PrimExpr, Var, IterVar
+from typing import Any
+
+
+def bind_value(self: Parser, name: str, value: Any) -> Any:
+    if isinstance(value, Frame):
+        value.add_callback(partial(value.__exit__, None, None, None))
+        res = value.__enter__()
+        def_(name, res)
+        return res
+    elif isinstance(value, (T.Buffer_, IterVar, Var, tuple, list)):
+        def_(name, value)
+        return value
+    elif isinstance(value, PrimExpr):
+        var = T.var(value.dtype)
+        def_(name, var)
+        frame = T.let(var, value)
+        frame.add_callback(partial(frame.__exit__, None, None, None))
+        frame.__enter__()
+        return var
+    else:
+        self.report_error("Do not know how to bind type: " + str(type(value)))
 
 
 @dispatch.register(token="tir", type_name="For")
@@ -36,7 +60,7 @@ def visit_for(self: Parser, node: doc.For) -> None:
         )
     with self.var_table.with_frame():
         with for_frame as iters:
-            self.eval_assign(target=node.target, source=iters)
+            self.eval_assign(target=node.target, source=iters, bind_value=bind_value)
             self.visit_body(node.body)
 
 
@@ -46,11 +70,7 @@ def visit_assign(self: Parser, node: doc.Assign) -> None:
         self.report_error(node, "Consequential assignments like 'a = b = c' are not supported.")
     lhs = node.targets[0]
     rhs = self.eval_expr(node.value)
-    if isinstance(rhs, Frame):
-        rhs.add_callback(partial(rhs.__exit__, None, None, None))
-        res = rhs.__enter__()
-        self.eval_assign(target=lhs, source=res)
-    elif isinstance(lhs, doc.Subscript):
+    if isinstance(lhs, doc.Subscript):
         if isinstance(lhs.slice, doc.Tuple):
             indices = []
             for index in lhs.slice.elts:
@@ -59,7 +79,20 @@ def visit_assign(self: Parser, node: doc.Assign) -> None:
             indices = [self.eval_expr(lhs.slice)]
         T.buffer_store(self.eval_expr(lhs.value), rhs, indices)
     else:
-        self.eval_assign(target=lhs, source=rhs)
+        self.eval_assign(target=lhs, source=rhs, bind_value=bind_value)
+
+
+@dispatch.register(token="tir", type_name="AnnAssign")
+def visit_ann_assign(self: Parser, node: doc.AnnAssign) -> None:
+    lhs = node.target
+    rhs = self.eval_expr(node.value)
+    var = self.visit_tvm_annotation(node.annotation)
+    if not isinstance(var, Var):
+        self.report_error(node.annotation, "Annotation should be Var")
+    self.eval_assign(target=lhs, source=var, bind_value=bind_value)
+    frame = T.let(var, rhs)
+    frame.add_callback(partial(frame.__exit__, None, None, None))
+    frame.__enter__()
 
 
 @dispatch.register(token="tir", type_name="With")
@@ -74,10 +107,7 @@ def visit_with(self: Parser, node: doc.With) -> None:
                 )
             rhs = stack.enter_context(frame)
             if item.optional_vars is not None:
-                self.eval_assign(
-                    target=item.optional_vars,
-                    source=rhs,
-                )
+                self.eval_assign(target=item.optional_vars, source=rhs, bind_value=bind_value)
         self.visit_body(node.body)
 
 
@@ -124,3 +154,14 @@ def visit_expr_stmt(self: Parser, node: doc.Expr) -> None:
     if isinstance(res, Frame):
         res.add_callback(partial(res.__exit__, None, None, None))
         res.__enter__()
+
+
+@dispatch.register(token="tir", type_name="If")
+def visit_if(self: Parser, node: doc.If) -> None:
+    with self.var_table.with_frame():
+        with T.if_(self.eval_expr(node.test)):
+            with T.then_():
+                self.visit_body(node.body)
+            if len(node.orelse):
+                with T.else_():
+                    self.visit_body(node.orelse)

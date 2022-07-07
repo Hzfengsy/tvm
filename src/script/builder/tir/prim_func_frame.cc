@@ -22,7 +22,7 @@
 #include <tvm/tir/function.h>
 
 #include "../ir/ir.h"
-#include "./block_frame.h"
+#include "./utils.h"
 #include "./var.h"
 
 namespace tvm {
@@ -165,6 +165,10 @@ Buffer MatchBuffer(ObjectRef param, Array<PrimExpr> shape, DataType dtype,
       }
     }
     LOG(FATAL) << "ValueError: Can not bind non-input param to buffer.";
+  } else if (const auto* buffer_load = param.as<tvm::tir::BufferLoadNode>()) {
+    BlockFrame frame = FindBlockFrame("T.match_buffer");
+    frame->match_buffers.push_back(tvm::tir::MatchBufferRegion(
+        buffer->buffer, BufferRegionFromLoad(GetRef<tvm::tir::BufferLoad>(buffer_load))));
   } else if (const auto* buffer_region = param.as<tvm::tir::BufferRegionNode>()) {
     BlockFrame frame = FindBlockFrame("T.match_buffer");
     frame->match_buffers.push_back(

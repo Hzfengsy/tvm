@@ -55,7 +55,7 @@ from .op import trunc, abs, round, nextafter, nearbyint, power, popcount, fmod, 
 from .op import isnan, isfinite, isinf, copysign, isnullptr
 from .op import div, indexdiv, indexmod, truncdiv, truncmod, floordiv, floormod
 from .op import comm_reducer, min, max, sum
-from .op import q_multiply_shift, address_of, lookup_param
+from .op import q_multiply_shift, address_of, lookup_param, shift_left, shift_right
 from .op import likely
 
 from .schedule import StmtSRef, BlockScope, ScheduleState, Schedule, ScheduleError

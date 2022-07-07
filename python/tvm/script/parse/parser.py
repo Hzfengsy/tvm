@@ -25,6 +25,7 @@ from .evaluator import eval_assign, eval_expr
 from .source import Source
 from .utils import deferred
 from .var_table import VarTable
+from typing import Callable
 
 DEFAULT_VISIT = {
     "Interactive",
@@ -98,11 +99,12 @@ class Parser(doc.NodeVisitor):
         self,
         target: doc.expr,
         source: Any,
+        bind_value: Callable[[str, Any], Any],
     ) -> Dict[str, Any]:
         var_values = eval_assign(self, target, source)
         for k, v in var_values.items():
-            def_(k, v)
-            self.var_table.add(k, v)
+            var = bind_value(self, k, v)
+            self.var_table.add(k, var)
         return var_values
 
     def report_error(self, node: doc.AST, msg: str) -> None:  # pylint: disable=no-self-use
@@ -151,6 +153,12 @@ class Parser(doc.NodeVisitor):
 
     def visit_Expr(self, node: doc.Expr) -> Any:
         return _dispatch(self, "Expr")(self, node)  # pylint: disable=invalid-name
+
+    def visit_If(self, node: doc.If) -> Any:
+        return _dispatch(self, "If")(self, node)  # pylint: disable=invalid-name
+
+    def visit_AnnAssign(self, node: doc.AnnAssign) -> Any:
+        return _dispatch(self, "AnnAssign")(self, node)  # pylint: disable=invalid-name
 
 
 def _handle_function(self: Parser, node: doc.FunctionDef) -> None:

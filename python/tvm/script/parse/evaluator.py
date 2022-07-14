@@ -92,14 +92,17 @@ class ExprEvaluator:
         ):
             return node
         fields = {}
-        for field in node.__class__._FIELDS:  # pylint: disable=protected-access
-            attr = getattr(node, field)
-            if isinstance(attr, (doc.AST, tuple, list)):
-                fields[field] = self._visit(attr)
-            else:
-                fields[field] = attr
+        if not isinstance(node, doc.Lambda):
+            for field in node.__class__._FIELDS:  # pylint: disable=protected-access
+                attr = getattr(node, field)
+                if isinstance(attr, (doc.AST, tuple, list)):
+                    fields[field] = self._visit(attr)
+                else:
+                    fields[field] = attr
         try:
-            if isinstance(node, doc.BoolOp) and isinstance(fields["op"], doc.And):
+            if isinstance(node, doc.Lambda):
+                value = _eval_expr(node, self.value_table)
+            elif isinstance(node, doc.BoolOp) and isinstance(fields["op"], doc.And):
                 value = self._eval_binary(
                     fields["values"],
                     lhs_func_name="__tvm_logical_and__",

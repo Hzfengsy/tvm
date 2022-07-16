@@ -18,6 +18,7 @@
 import contextlib
 from functools import partial
 from typing import Any
+from copy import deepcopy
 
 from tvm.tir import IterVar, PrimExpr, Var
 
@@ -68,6 +69,49 @@ def visit_assign(self: Parser, node: doc.Assign) -> None:
         self.report_error(node, "Consequential assignments like 'a = b = c' are not supported.")
     lhs = node.targets[0]
     rhs = self.eval_expr(node.value)
+    if isinstance(lhs, doc.Subscript):
+        if isinstance(lhs.slice, doc.Tuple):
+            indices = []
+            for index in lhs.slice.elts:
+                indices.append(self.eval_expr(index))
+        else:
+            indices = [self.eval_expr(lhs.slice)]
+        T.buffer_store(self.eval_expr(lhs.value), rhs, indices)
+    else:
+        self.eval_assign(target=lhs, source=rhs, bind_value=bind_value)
+
+
+@dispatch.register(token="tir", type_name="AugAssign")
+def visit_aug_ssign(self: Parser, node: doc.AugAssign) -> None:
+    lhs_pos = (
+        node.target.lineno,
+        node.target.col_offset,
+        node.target.end_lineno,
+        node.target.end_col_offset,
+    )
+    rhs_pos = (
+        node.value.lineno,
+        node.value.col_offset,
+        node.value.end_lineno,
+        node.value.end_col_offset,
+    )
+    node.target.ctx = doc.Load(*lhs_pos)
+    with self.var_table.with_frame():
+        lhs_name = f"__tvm_tmp_value_aug_assign_lhs_{lhs_pos[0]}"
+        rhs_name = f"__tvm_tmp_value_aug_assign_rhs_{rhs_pos[0]}"
+        lhs_expr = self.eval_expr(node.target)
+        rhs_expr = self.eval_expr(node.value)
+        self.var_table.add(lhs_name, lhs_expr)
+        self.var_table.add(rhs_name, rhs_expr)
+        binop = doc.BinOp(
+            doc.Name(lhs_name, doc.Load(*lhs_pos), *lhs_pos),
+            node.op,
+            doc.Name(rhs_name, doc.Load(*rhs_pos), *rhs_pos),
+            *lhs_pos,
+        )
+        rhs = self.eval_expr(binop)
+    lhs = node.target
+    lhs.ctx = doc.Store(*lhs_pos)
     if isinstance(lhs, doc.Subscript):
         if isinstance(lhs.slice, doc.Tuple):
             indices = []

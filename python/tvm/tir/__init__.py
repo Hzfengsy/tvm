@@ -40,7 +40,7 @@ from .stmt import (
 
 from .stmt import ProducerRealize, SeqStmt
 from .stmt import IfThenElse, Evaluate, Prefetch, stmt_seq, stmt_list
-from .stmt import BufferRegion, MatchBufferRegion, Block, BlockRealize
+from .stmt import BufferRegion, MatchBufferRegion, Block, BlockRealize, type_annotation
 
 from .function import PrimFunc, TensorIntrin, IndexMap
 
@@ -57,6 +57,11 @@ from .op import div, indexdiv, indexmod, truncdiv, truncmod, floordiv, floormod
 from .op import comm_reducer, min, max, sum
 from .op import q_multiply_shift, address_of, lookup_param, shift_left, shift_right
 from .op import likely
+from .op import ptx_mma, ptx_mma_sp, ptx_ldmatrix, ptx_cp_async, ptx_wait_group, ptx_commit_group
+from .op import mma_store, mma_fill
+from .op import tvm_access_ptr, tvm_struct_get, tvm_struct_set
+from .op import tvm_thread_allreduce, tvm_load_matrix_sync, tvm_mma_sync, tvm_bmma_sync
+from .op import tvm_fill_fragment, tvm_store_matrix_sync
 
 from .schedule import StmtSRef, BlockScope, ScheduleState, Schedule, ScheduleError
 

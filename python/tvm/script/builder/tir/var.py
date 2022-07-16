@@ -97,6 +97,9 @@ class Buffer_(Object):
     def buffer_type(self) -> int:
         return self.buffer.buffer_type
 
+    def access_ptr(self, access_mask, ptr_type="handle", content_lanes=1, offset=0, extent=None):
+        return self.buffer.access_ptr(access_mask, ptr_type, content_lanes, offset, extent)
+
     def __getitem__(self, indices):
         if not isinstance(indices, (tuple, list)):
             indices = [indices]

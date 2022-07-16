@@ -18,7 +18,9 @@
 
 from tvm.tir.expr import Broadcast, Ramp as ramp, Select, Shuffle
 from tvm.tir.generic import cast
-from tvm.tir import op
+from tvm.tir import op, type_annotation
+from tvm.tir.op import tvm_struct_get
+from tvm.target import Target as target
 
 
 def op_wrapper(func):
@@ -106,6 +108,26 @@ call_llvm_intrin = dtype_forward(op.call_llvm_intrin)
 call_llvm_pure_intrin = dtype_forward(op.call_llvm_pure_intrin)
 call_packed = dtype_forward(op.call_packed)
 call_pure_extern = dtype_forward(op.call_pure_extern)
+
+tvm_access_ptr = op_wrapper(op.tvm_access_ptr)
+tvm_struct_set = op_wrapper(op.tvm_struct_set)
+
+tvm_thread_allreduce = op_wrapper(op.tvm_thread_allreduce)
+tvm_load_matrix_sync = op_wrapper(op.tvm_load_matrix_sync)
+tvm_mma_sync = op_wrapper(op.tvm_mma_sync)
+tvm_bmma_sync = op_wrapper(op.tvm_bmma_sync)
+tvm_fill_fragment = op_wrapper(op.tvm_fill_fragment)
+tvm_store_matrix_sync = op_wrapper(op.tvm_store_matrix_sync)
+
+ptx_mma = op_wrapper(op.ptx_mma)
+ptx_mma_sp = op_wrapper(op.ptx_mma_sp)
+ptx_ldmatrix = op_wrapper(op.ptx_ldmatrix)
+ptx_cp_async = op_wrapper(op.ptx_cp_async)
+ptx_wait_group = op_wrapper(op.ptx_wait_group)
+ptx_commit_group = op_wrapper(op.ptx_commit_group)
+mma_store = op_wrapper(op.mma_store)
+mma_fill = op_wrapper(op.mma_fill)
+
 
 from . import _ffi_api
 

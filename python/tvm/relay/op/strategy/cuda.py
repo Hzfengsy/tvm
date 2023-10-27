@@ -475,6 +475,7 @@ def judge_winograd(
     pre_flag,
 ):
     """Winograd judgement about tensorcore and shape"""
+    return False, False, False
     if H % 8 == 0:
         tile_size = 4
     else:

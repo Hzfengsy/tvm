@@ -33,6 +33,7 @@ logger = logging.getLogger("topi")
 
 @nn.conv2d_alter_layout.register(["cuda", "gpu"])
 def _alter_conv2d_layout(attrs, inputs, tinfos, out_type):
+    return None
     target = tvm.target.Target.current(allow_none=False)
     if not is_target(["vulkan", "rocm", "cuda"]):
         return None

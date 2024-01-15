@@ -303,7 +303,7 @@ class VirtualMachine(object):
         """
         self._invoke_stateful(func_name)
 
-    def get_outputs(self, func_name: str) -> Union[tvm.Object, Tuple[Any]]:
+    def get_outputs(self, func_name: str, unpack=True) -> Union[tvm.Object, Tuple[Any]]:
         """
         Get the value output by the function by the given name
         after a call of `invoke_stateful`.
@@ -326,7 +326,7 @@ class VirtualMachine(object):
         # to deal with potentially nested tuples, we need to query for arity recursively
         def get_output_rec(func_name, *idx):
             arity = self._get_output_arity(func_name, *idx)
-            if arity == -1:
+            if arity == -1 or not unpack:
                 return self._get_output(func_name, *idx)
             # otherwise we need to specify more indices
             idx_list = list(idx)

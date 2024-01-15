@@ -893,11 +893,11 @@ void VirtualMachineImpl::_GetOutput(TVMArgs args, TVMRetValue* rv) {
   std::string func_name = args[0];
   RegType out = LookupVMOutput(func_name);
   ObjectRef obj = IndexIntoNestedObject(out.AsObjectRef<ObjectRef>(), args, 1);
-  if (obj.as<ArrayNode>()) {
-    LOG(FATAL) << "ValueError: `get_output` cannot return a tuple for RPC compatibility. "
-                  "Please specify another index argument.";
-    return;
-  }
+  // if (obj.as<ArrayNode>()) {
+  //   LOG(FATAL) << "ValueError: `get_output` cannot return a tuple for RPC compatibility. "
+  //                 "Please specify another index argument.";
+  //   return;
+  // }
   *rv = obj;
 }
 

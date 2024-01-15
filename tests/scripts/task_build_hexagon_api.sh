@@ -48,6 +48,7 @@ cmake -DANDROID_ABI=arm64-v8a \
     -DUSE_HEXAGON_SDK="${HEXAGON_SDK_ROOT}" \
     -DUSE_HEXAGON_TOOLCHAIN="${HEXAGON_TOOLCHAIN}" \
     -DUSE_OUTPUT_BINARY_DIR="${output_directory}" \
-    -DUSE_HEXAGON_GTEST="${HEXAGON_SDK_ROOT}/utils/googletest/gtest" ..
+    ..
+    # -DUSE_HEXAGON_GTEST="${HEXAGON_SDK_ROOT}/utils/googletest/gtest" ..
 
 make -j$(nproc)

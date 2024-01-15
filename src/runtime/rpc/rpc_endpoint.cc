@@ -30,18 +30,13 @@
 #include <tvm/runtime/serializer.h>
 
 #include <algorithm>
-#include <array>
-#include <chrono>
-#include <cmath>
 #include <memory>
 #include <string>
 #include <utility>
-#include <vector>
 
 #include "../../support/arena.h"
 #include "../../support/ring_buffer.h"
 #include "../../support/utils.h"
-#include "../object_internal.h"
 #include "rpc_local_session.h"
 
 namespace tvm {
@@ -175,7 +170,7 @@ class RPCEndpoint::EventHandler : public dmlc::Stream {
     for (int i = 0; i < num_args; ++i) {
       int tcode = type_codes[i];
       if (tcode == kTVMObjectHandle || tcode == kTVMObjectRValueRefArg) {
-        if (!args[i].IsObjectRef<RPCObjectRef>()) {
+        if (!args[i].IsObjectRef<RPCObjectRef>() && !args[i].IsObjectRef<ShapeTuple>()) {
           LOG(FATAL) << "ValueError: Cannot pass argument " << i << ", type "
                      << args[i].AsObjectRef<ObjectRef>()->GetTypeKey()
                      << " is not supported by RPC";
@@ -233,6 +228,11 @@ class RPCEndpoint::EventHandler : public dmlc::Stream {
       this->template Write<uint32_t>(kRuntimeRPCObjectRefTypeIndex);
       uint64_t handle = reinterpret_cast<uint64_t>(ref->object_handle());
       this->template Write<int64_t>(handle);
+    } else if (obj->IsInstance<ShapeTupleObj>()) {
+      ShapeTupleObj* shape = static_cast<ShapeTupleObj*>(obj);
+      this->template Write<uint32_t>(TypeIndex::kRuntimeShapeTuple);
+      this->template Write<uint64_t>(shape->size);
+      this->template WriteArray<ShapeTupleObj::index_type>(shape->data, shape->size);
     } else {
       LOG(FATAL) << "ValueError: Object type is not supported in RPC calling convention: "
                  << obj->GetTypeKey() << " (type_index = " << obj->type_index() << ")";
@@ -241,6 +241,9 @@ class RPCEndpoint::EventHandler : public dmlc::Stream {
   uint64_t GetObjectBytes(Object* obj) {
     if (obj->IsInstance<RPCObjectRefObj>()) {
       return sizeof(uint32_t) + sizeof(int64_t);
+    } else if (obj->IsInstance<ShapeTupleObj>()) {
+      uint64_t ndim = static_cast<ShapeTupleObj*>(obj)->size;
+      return sizeof(uint32_t) + sizeof(uint64_t) + ndim * sizeof(ShapeTupleObj::index_type);
     } else {
       LOG(FATAL) << "ValueError: Object type is not supported in RPC calling convention: "
                  << obj->GetTypeKey() << " (type_index = " << obj->type_index() << ")";
@@ -260,8 +263,16 @@ class RPCEndpoint::EventHandler : public dmlc::Stream {
       this->template Read<uint64_t>(&handle);
       tcode[0] = kTVMObjectHandle;
       value[0].v_handle = reinterpret_cast<void*>(handle);
+    } else if (type_index == TypeIndex::kRuntimeShapeTuple) {
+      uint64_t ndim = 0;
+      this->template Read<uint64_t>(&ndim);
+      std::vector<ShapeTupleObj::index_type> data(ndim);
+      this->template ReadArray<ShapeTupleObj::index_type>(data.data(), ndim);
+      ObjectRef result = ShapeTuple(std::move(data));
+      object_arena_.push_back(result);
+      TVMArgsSetter(value, tcode)(0, result);
     } else {
-      LOG(FATAL) << "ValueError: Object type is not supported in Disco calling convention: "
+      LOG(FATAL) << "ValueError: Object type is not supported in RPC calling convention: "
                  << Object::TypeIndex2Key(type_index) << " (type_index = " << type_index << ")";
     }
   }
@@ -296,6 +307,7 @@ class RPCEndpoint::EventHandler : public dmlc::Stream {
   bool async_server_mode_{false};
   // Internal arena
   support::Arena arena_;
+  std::vector<ObjectRef> object_arena_;
 
   // State switcher
   void SwitchToState(State state) {
@@ -314,6 +326,7 @@ class RPCEndpoint::EventHandler : public dmlc::Stream {
       this->RequestBytes(sizeof(uint64_t));
       // recycle arena for the next session.
       arena_.RecycleAll();
+      object_arena_.clear();
     }
   }
 

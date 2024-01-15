@@ -32,9 +32,9 @@ from tvm.rpc.tracker import Tracker
 from tvm.rpc.proxy import Proxy
 
 
-if __name__ == "__main__":
-    # NOTE: must live here to avoid registering PackedFunc with libtvm.so twice.
-    tvm.testing.main()
+# if __name__ == "__main__":
+#     # NOTE: must live here to avoid registering PackedFunc with libtvm.so twice.
+#     tvm.testing.main()
 
 
 # tkonolige: The issue as I understand it is this: multiprocessing's spawn
@@ -467,6 +467,23 @@ def test_rpc_return_remote_object():
 
 
 @tvm.testing.requires_rpc
+def test_rpc_send_lcoal_shape_tuple():
+    def check(client, is_local):
+        local_shape = tvm.runtime.ShapeTuple([2, 3])
+        get_elem = client.get_function("runtime.GetShapeTupleElem")
+        get_size = client.get_function("runtime.GetShapeTupleSize")
+        assert get_elem(local_shape, 0) == 2
+        assert get_elem(local_shape, 1) == 3
+        assert get_size(local_shape) == 2
+
+    # start server
+    server = rpc.Server(key="x1")
+    client = rpc.connect("127.0.0.1", server.port, key="x1")
+    check(rpc.LocalSession(), True)
+    check(client, False)
+
+
+@tvm.testing.requires_rpc
 def test_local_func():
     client = rpc.LocalSession()
 
@@ -668,3 +685,7 @@ def test_rpc_session_timeout_error(with_proxy):
     if with_proxy:
         proxy.terminate()
     tracker.terminate()
+
+
+test_rpc_return_remote_object()
+test_rpc_send_lcoal_shape_tuple()

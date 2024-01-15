@@ -181,7 +181,6 @@ class RPCModuleNode final : public ModuleNode {
   int GetPropertyMask() const final { return ModulePropertyMask::kRunnable; }
 
   PackedFunc GetFunction(const String& name, const ObjectPtr<Object>& sptr_to_self) final {
-    LOG(INFO) << name;
     if (name == "CloseRPCConnection") {
       return PackedFunc([this](TVMArgs, TVMRetValue*) { sess_->Shutdown(); });
     }

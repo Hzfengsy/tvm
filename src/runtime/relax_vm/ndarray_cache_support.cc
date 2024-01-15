@@ -267,7 +267,25 @@ class NDArrayCache {
 };
 
 TVM_REGISTER_GLOBAL("vm.builtin.ndarray_cache.get").set_body_typed(NDArrayCache::Get);
-TVM_REGISTER_GLOBAL("vm.builtin.ndarray_cache.update").set_body_typed(NDArrayCache::Update);
+// TVM_REGISTER_GLOBAL("vm.builtin.ndarray_cache.update").set_body_typed(NDArrayCache::Update);
+TVM_REGISTER_GLOBAL("vm.builtin.ndarray_cache.update").set_body([](TVMArgs args, TVMRetValue* rv) {
+  CHECK(args.size() == 2 || args.size() == 3);
+  String name = args[0];
+  bool is_override = args.size() == 2 ? false : args[2];
+
+  NDArray arr;
+  if (args[1].type_code() == kTVMNDArrayHandle) {
+    arr = args[1];
+  } else {
+    DLTensor* tensor = args[1];
+    DLManagedTensor managed;
+    managed.dl_tensor = *tensor;
+    arr = NDArray::FromDLPack(&managed);
+  }
+
+  NDArrayCache::Update(name, arr, is_override);
+});
+
 TVM_REGISTER_GLOBAL("vm.builtin.ndarray_cache.remove").set_body_typed(NDArrayCache::Remove);
 TVM_REGISTER_GLOBAL("vm.builtin.ndarray_cache.clear").set_body_typed(NDArrayCache::Clear);
 TVM_REGISTER_GLOBAL("vm.builtin.ndarray_cache.load").set_body_typed(NDArrayCache::Load);

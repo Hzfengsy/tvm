@@ -278,9 +278,13 @@ TVM_REGISTER_GLOBAL("vm.builtin.ndarray_cache.update").set_body([](TVMArgs args,
     arr = args[1];
   } else {
     DLTensor* tensor = args[1];
-    DLManagedTensor managed;
-    managed.dl_tensor = *tensor;
-    arr = NDArray::FromDLPack(&managed);
+    std::vector<int64_t> shape;
+    for (int64_t i = 0; i < tensor->ndim; i++) {
+      shape.push_back(tensor->shape[i]);
+    }
+    NDArray arr = NDArray::Empty(shape, tensor->dtype, tensor->device);
+    arr.CopyFrom(tensor);
+    TVMSynchronize(arr->device.device_type, arr->device.device_id, nullptr);
   }
 
   NDArrayCache::Update(name, arr, is_override);

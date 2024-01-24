@@ -159,9 +159,9 @@ function(_get_hexagon_sdk_property_impl
       set(_dirs "${_hexagon_sdk_root}/incs" "${_hexagon_sdk_root}/incs/stddef")
     elseif(_property STREQUAL "QURT_INCLUDE")
       # Set the Hexagon arch directory for runtime linker.
-      set(_rtld_dir "hexagon_toolv84_${_hexagon_arch}")
+      set(_rtld_dir "hexagon_toolv86_${_hexagon_arch}")
       if(_hexagon_arch STREQUAL "v69")
-        set(_rtld_dir "hexagon_toolv84_v68") # Use hexagon_toolv84_v68 for v69
+        set(_rtld_dir "hexagon_toolv86_v68") # Use hexagon_toolv84_v68 for v69
       endif()
       set(_dirs
         "${_hexagon_sdk_root}/rtos/qurt/${_hexarch_dir}/include/posix"

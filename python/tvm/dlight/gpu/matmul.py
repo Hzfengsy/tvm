@@ -18,9 +18,9 @@
 """A GEMM schedule rule for GPU operators."""
 from dataclasses import dataclass
 from enum import Enum
-from typing import Dict, List, Optional, Set, Tuple
+from typing import Dict, List, Literal, Optional, Set, Tuple
 
-from tvm import tir
+from tvm import TVMError, tir
 from tvm.ir import Range
 from tvm.target import Target
 from tvm.tir import IterVar, PrimExpr, Var
@@ -29,6 +29,8 @@ from tvm.tir.schedule.schedule import BlockRV
 
 from ..base import analysis
 from .base import GPUScheduleRule
+
+from .utils import auto_vectorize, get_extent
 
 
 def _collect_producers(sch: tir.Schedule, block: tir.schedule.BlockRV):
@@ -58,7 +60,7 @@ def auto_inline_producers(
             try:
                 sch.compute_inline(producer)
                 inlined_cnt += 1
-            except:  # pylint: disable=bare-except
+            except (TVMError, ValueError):
                 continue
         if inlined_cnt == 0:
             return
@@ -75,13 +77,13 @@ def auto_inline_consumers(
             try:
                 sch.compute_inline(consumer)
                 inlined_cnt += 1
-            except:  # pylint: disable=bare-except
+            except (TVMError, ValueError):
                 continue
         for consumer in consumers:
             try:
                 sch.reverse_compute_inline(consumer)
                 inlined_cnt += 1
-            except:  # pylint: disable=bare-except
+            except (TVMError, ValueError):
                 continue
         if inlined_cnt == 0:
             return
@@ -234,7 +236,9 @@ def detect_iter_traits(block: tir.Block) -> Optional[Tuple[List[IterTrait]]]:
     return A_traits, B_traits, C_traits, block_traits
 
 
-def get_index_map(block: tir.Block) -> Optional[Tuple[tir.IndexMap, ...]]:
+def get_index_map(
+    block: tir.Block, weight_layout: Literal["NN", "NT"] = "NT"
+) -> Optional[Tuple[tir.IndexMap, ...]]:
     """Get index maps for the block
 
     Parameters
@@ -255,8 +259,12 @@ def get_index_map(block: tir.Block) -> Optional[Tuple[tir.IndexMap, ...]]:
     A_index_map = make_iter_fusion_index_map(
         A_traits, [IterKind.kIter_S, IterKind.kIter_I, IterKind.kIter_K]
     )
-    B_index_map = make_iter_fusion_index_map(
-        B_traits, [IterKind.kIter_S, IterKind.kIter_J, IterKind.kIter_K]
+    B_index_map = (
+        make_iter_fusion_index_map(B_traits, [IterKind.kIter_S, IterKind.kIter_J, IterKind.kIter_K])
+        if weight_layout == "NT"
+        else make_iter_fusion_index_map(
+            B_traits, [IterKind.kIter_S, IterKind.kIter_K, IterKind.kIter_J]
+        )
     )
     C_index_map = make_iter_fusion_index_map(
         C_traits, [IterKind.kIter_S, IterKind.kIter_I, IterKind.kIter_J]
@@ -313,6 +321,39 @@ def check_sm_version(arch: str) -> int:
     return int(sm_version) if sm_version.isdigit() else -1
 
 
+def normalize_block_layout(
+    func: tir.PrimFunc, weight_layout: Literal["NN", "NT"] = "NT"
+) -> Tuple[tir.Schedule, tir.schedule.BlockRV]:
+    """
+    Normalize the layout of the block to be C[S, I, J] += A[S, I, K] * B[S, J, K]
+    """
+    sch = tir.Schedule(func)
+    root_block = analysis.get_root_block(sch)
+    blocks = sch.get_child_blocks(root_block)
+
+    reduction_blocks = get_reduction_blocks(sch, blocks)
+    if reduction_blocks is None:
+        return None, None
+
+    main_block = reduction_blocks[0]
+    block_stmt = sch.get(main_block)
+    index_maps = get_index_map(block_stmt, weight_layout)
+    if index_maps is None:
+        return None, None
+    matmul_index_map, a_index_map, b_index_map, c_index_map = index_maps
+
+    # Normalize generic matmul to C[S, I, J] += A[S, I, K] * B[S, J, K]
+    block = sch.reindex(main_block, ("read", 0))
+    sch.transform_layout(block, ("write", 0), a_index_map)
+    block = sch.reindex(main_block, ("read", 1))
+    sch.transform_layout(block, ("write", 0), b_index_map)
+    block = sch.reindex(main_block, ("write", 0))
+    sch.transform_layout(block, ("read", 0), c_index_map)
+    sch.transform_block_layout(main_block, matmul_index_map)
+
+    return sch, main_block
+
+
 class MetalMatmul(GPUScheduleRule):
     """
     The schedule rule for Metal matmul computation.
@@ -330,21 +371,6 @@ class MetalMatmul(GPUScheduleRule):
 
         if not isinstance(func, tir.PrimFunc) or not self.is_target_available(target):
             return None
-        sch = tir.Schedule(func)
-        root_block = analysis.get_root_block(sch)
-        blocks = sch.get_child_blocks(root_block)
-
-        reduction_blocks = get_reduction_blocks(sch, blocks)
-        if reduction_blocks is None:
-            return None
-
-        main_block = reduction_blocks[0]
-        block_stmt = sch.get(main_block)
-        index_maps = get_index_map(block_stmt)
-        if index_maps is None:
-            return None
-        matmul_index_map, a_index_map, b_index_map, c_index_map = index_maps
-
         # Step 0. Configs
         block_size_x: int = 16
         block_size_y: int = 16
@@ -356,13 +382,9 @@ class MetalMatmul(GPUScheduleRule):
         vector_size: int = 4
 
         # Step 1. Normalize generic matmul to C[S, I, J] += A[S, I, K] * B[S, J, K]
-        block = sch.reindex(main_block, ("read", 0))
-        sch.transform_layout(block, ("write", 0), a_index_map)
-        block = sch.reindex(main_block, ("read", 1))
-        sch.transform_layout(block, ("write", 0), b_index_map)
-        block = sch.reindex(main_block, ("write", 0))
-        sch.transform_layout(block, ("read", 0), c_index_map)
-        sch.transform_block_layout(main_block, matmul_index_map)
+        sch, main_block = normalize_block_layout(func)
+        if sch is None:
+            return None
 
         # Step 2. Padding for dynamic shape kernels
         sch.pad_einsum(
@@ -434,13 +456,16 @@ class MetalMatmul(GPUScheduleRule):
             sch.tensorize(ii, intrin)
 
         C_init = sch.decompose_reduction(main_block, k0)
-        tensorize_block(A_simdgroup, intrin_group["load_a"])
-        tensorize_block(B_simdgroup, intrin_group["load_b"])
-        tensorize_block(C_simd2s, intrin_group["store"])
-        tensorize_block(C_init, intrin_group["init"])
+        try:
+            tensorize_block(A_simdgroup, intrin_group["load_a"])
+            tensorize_block(B_simdgroup, intrin_group["load_b"])
+            tensorize_block(C_simd2s, intrin_group["store"])
+            tensorize_block(C_init, intrin_group["init"])
 
-        *_, i, j, k = sch.get_loops(main_block)
-        sch.tensorize(i, intrin_group["compute"])
+            *_, i, j, k = sch.get_loops(main_block)
+            sch.tensorize(i, intrin_group["compute"])
+        except TVMError:
+            return None
 
         auto_inline_consumer_chain(sch, C_s2g)
         fused = sch.fuse(*sch.get_loops(C_s2g)[-2:])
@@ -469,25 +494,12 @@ class MatmulTensorization(GPUScheduleRule):
             get_wmma_intrin_group,
         )
 
-        if not isinstance(func, tir.PrimFunc) or not self.is_target_available(target):
+        if (
+            not isinstance(func, tir.PrimFunc)
+            or not self.is_target_available(target)
+            or "dlight.do_not_tensorize" in func.attrs.keys()
+        ):
             return None
-        sch = tir.Schedule(func)
-        root_block = analysis.get_root_block(sch)
-        blocks = sch.get_child_blocks(root_block)
-
-        if "dlight.do_not_tensorize" in func.attrs.keys():
-            return None
-
-        reduction_blocks = get_reduction_blocks(sch, blocks)
-        if reduction_blocks is None:
-            return None
-
-        main_block = reduction_blocks[0]
-        block_stmt = sch.get(main_block)
-        index_maps = get_index_map(block_stmt)
-        if index_maps is None:
-            return None
-        matmul_index_map, a_index_map, b_index_map, c_index_map = index_maps
 
         # Start Schedule
         # Step 0. Get schedule config.
@@ -513,13 +525,9 @@ class MatmulTensorization(GPUScheduleRule):
         k_pad_factor = k_factors[1]
 
         # Step 1. Normalize generic matmul to C[S, I, J] += A[S, I, K] * B[S, J, K]
-        block = sch.reindex(main_block, ("read", 0))
-        sch.transform_layout(block, ("write", 0), a_index_map)
-        block = sch.reindex(main_block, ("read", 1))
-        sch.transform_layout(block, ("write", 0), b_index_map)
-        block = sch.reindex(main_block, ("write", 0))
-        sch.transform_layout(block, ("read", 0), c_index_map)
-        sch.transform_block_layout(main_block, matmul_index_map)
+        sch, main_block = normalize_block_layout(func)
+        if sch is None:
+            return None
 
         # Step 2. Padding for dynamic shape kernels
         sch.pad_einsum(
@@ -690,25 +698,12 @@ class MatmulInt8Tensorization(GPUScheduleRule):
             get_wmma_intrin_group,
         )
 
-        if not isinstance(func, tir.PrimFunc) or not self.is_target_available(target):
+        if (
+            not isinstance(func, tir.PrimFunc)
+            or not self.is_target_available(target)
+            or "dlight.do_not_tensorize" in func.attrs.keys()
+        ):
             return None
-        sch = tir.Schedule(func)
-        root_block = analysis.get_root_block(sch)
-        blocks = sch.get_child_blocks(root_block)
-
-        if "dlight.do_not_tensorize" in func.attrs.keys():
-            return None
-
-        reduction_blocks = get_reduction_blocks(sch, blocks)
-        if reduction_blocks is None:
-            return None
-
-        main_block = reduction_blocks[0]
-        block_stmt = sch.get(main_block)
-        index_maps = get_index_map(block_stmt)
-        if index_maps is None:
-            return None
-        matmul_index_map, a_index_map, b_index_map, c_index_map = index_maps
 
         # Start Schedule
         # Step 0. Get schedule config.
@@ -734,13 +729,9 @@ class MatmulInt8Tensorization(GPUScheduleRule):
         k_pad_factor = k_factors[1]
 
         # Step 1. Normalize generic matmul to C[S, I, J] += A[S, I, K] * B[S, J, K]
-        block = sch.reindex(main_block, ("read", 0))
-        sch.transform_layout(block, ("write", 0), a_index_map)
-        block = sch.reindex(main_block, ("read", 1))
-        sch.transform_layout(block, ("write", 0), b_index_map)
-        block = sch.reindex(main_block, ("write", 0))
-        sch.transform_layout(block, ("read", 0), c_index_map)
-        sch.transform_block_layout(main_block, matmul_index_map)
+        sch, main_block = normalize_block_layout(func)
+        if sch is None:
+            return None
 
         # Step 2. Padding for dynamic shape kernels
         sch.pad_einsum(
@@ -879,6 +870,92 @@ class MatmulInt8Tensorization(GPUScheduleRule):
         return sch
 
 
+class MobileGPUMatmul(GPUScheduleRule):
+    """The schedule rule for matmul on mobile GPU, such as Mali and Adreno"""
+
+    def apply(  # pylint: disable=too-many-locals,missing-docstring
+        self,
+        func: tir.PrimFunc,
+        target: Target,
+        _: bool,
+    ) -> Optional[tir.Schedule]:
+
+        if not isinstance(func, tir.PrimFunc) or not self.is_target_available(target):
+            return None
+
+        # Step 0. Normalize generic matmul to C[S, I, J] += A[S, I, K] * B[S, K, J]
+        sch, main_block = normalize_block_layout(func, weight_layout="NN")
+        if sch is None:
+            return None
+
+        block_size_x = 32
+        block_size_y = 4
+        block_size_k = 4
+        micro_size_x = 8
+        micro_size_y = 4
+        micro_size_k = 4
+        unroll = 16
+        sch.pad_einsum(
+            main_block,
+            [1, block_size_y * micro_size_y, block_size_x * micro_size_x, micro_size_k],
+        )
+
+        bs, y, x, k = sch.get_loops(main_block)
+        by, ty, yi = sch.split(y, [None, block_size_y, micro_size_y])
+        bx, tx, xi = sch.split(x, [None, block_size_x, micro_size_x])
+        k0, k1, k2 = sch.split(k, [None, block_size_k, micro_size_k])
+        sch.reorder(by, bx, ty, tx, k0, k1, k2, yi, xi)
+        sch.bind(bs, "blockIdx.z")
+        sch.bind(by, "blockIdx.y")
+        sch.bind(bx, "blockIdx.x")
+        sch.bind(ty, "threadIdx.y")
+        sch.bind(tx, "threadIdx.x")
+
+        sch.annotate(tx, ann_key="pragma_auto_unroll_max_step", ann_val=unroll)
+        sch.annotate(tx, ann_key="pragma_unroll_explicit", ann_val=1)
+
+        def _fetch_shared(block: tir.schedule.BlockRV, idx: int, vec: int):
+            g2s = sch.cache_read(block, idx, "shared")
+            num_loops = len(sch.get_loops(g2s))
+            sch.compute_at(g2s, k0, preserve_unit_loops=True)
+            fused = sch.fuse(*sch.get_loops(g2s)[-num_loops:])
+            max_vec = min(get_extent(sch, fused) // (block_size_y * block_size_x), vec)
+            # max_vec = vec
+            _, ty, tx, v = sch.split(
+                fused,
+                [None, block_size_y, block_size_x, max_vec],
+            )
+            sch.bind(ty, "threadIdx.y")
+            sch.bind(tx, "threadIdx.x")
+            sch.vectorize(v)
+            return g2s
+
+        def _fetch_local(block: tir.schedule.BlockRV, idx: int, vec: int):
+            g2l = sch.cache_read(block, idx, "local")
+            sch.compute_at(g2l, k1, preserve_unit_loops=True)
+            # auto_vectorize(sch, sch.get_loops(g2l)[-1], vec)
+            return g2l
+
+        A_g2l = _fetch_local(main_block, idx=0, vec=8)
+        auto_inline_producers(sch, A_g2l)
+        B_g2s = _fetch_shared(main_block, idx=1, vec=4)
+        auto_inline_producers(sch, B_g2s)
+        sch.compute_inline(B_g2s)
+        for i in range(1, len(sch.get(main_block).reads)):
+            _fetch_shared(main_block, idx=i, vec=4)
+
+        auto_vectorize(sch, xi, max_vec=8)
+
+        l2g = sch.cache_write(main_block, 0, "local")
+        sch.reverse_compute_at(l2g, tx, preserve_unit_loops=True)
+        sch.vectorize(sch.get_loops(l2g)[-1])
+        auto_inline_consumer_chain(sch, l2g)
+
+        sch.decompose_reduction(main_block, k0)
+
+        return sch
+
+
 class Matmul(GPUScheduleRule):
     """The schedule rule for matmul-like computation"""
 
@@ -940,29 +1017,11 @@ class Matmul(GPUScheduleRule):
     ) -> Optional[tir.Schedule]:
         if not isinstance(func, tir.PrimFunc) or not self.is_target_available(target):
             return None
-        sch = tir.Schedule(func)
-        root_block = analysis.get_root_block(sch)
-        blocks = sch.get_child_blocks(root_block)
-
-        reduction_blocks = get_reduction_blocks(sch, blocks)
-        if reduction_blocks is None:
-            return None
-
-        main_block = reduction_blocks[0]
-        block_stmt = sch.get(main_block)
-        index_maps = get_index_map(block_stmt)
-        if index_maps is None:
-            return None
-        matmul_index_map, a_index_map, b_index_map, c_index_map = index_maps
 
         # Step 0. Normalize generic matmul to C[S, I, J] += A[S, I, K] * B[S, J, K]
-        block = sch.reindex(main_block, ("read", 0))
-        sch.transform_layout(block, ("write", 0), a_index_map)
-        block = sch.reindex(main_block, ("read", 1))
-        sch.transform_layout(block, ("write", 0), b_index_map)
-        block = sch.reindex(main_block, ("write", 0))
-        sch.transform_layout(block, ("read", 0), c_index_map)
-        sch.transform_block_layout(main_block, matmul_index_map)
+        sch, main_block = normalize_block_layout(func)
+        if sch is None:
+            return None
 
         # Step 1. Check Tensor Core support
         # Tensorization config:
@@ -989,10 +1048,13 @@ class Matmul(GPUScheduleRule):
                 if tensorize_sch is not None:
                     return tensorize_sch
         elif target.kind.name == "metal":
-            try:
-                return MetalMatmul().apply(func, target, _)
-            except:  # pylint: disable=bare-except
-                pass
+            metal_sch = MetalMatmul().apply(func, target, _)
+            if metal_sch is not None:
+                return metal_sch
+        elif target.kind.name == "opencl" and "android" in str(target.host):
+            mobile_sch = MobileGPUMatmul().apply(func, target, _)
+            if mobile_sch is not None:
+                return mobile_sch
 
         # Step 2. Get schedule config.
         config = self.get_configs(target)

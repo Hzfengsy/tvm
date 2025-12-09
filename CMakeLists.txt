@@ -228,6 +228,19 @@ else(MSVC)
     set(CMAKE_CXX_FLAGS "-faligned-new ${CMAKE_CXX_FLAGS}")
   endif()
 
+  if("${CMAKE_BUILD_TYPE}" STREQUAL "RelWithDebInfo")
+    foreach(flag_var
+        CMAKE_C_FLAGS_RELWITHDEBINFO
+        CMAKE_CXX_FLAGS_RELWITHDEBINFO
+        CMAKE_CUDA_FLAGS_RELWITHDEBINFO)
+      string(REGEX REPLACE "(^| )-g([0-9]*)" " " ${flag_var} "${${flag_var}}")
+      string(STRIP "${${flag_var}}" ${flag_var})
+      set(${flag_var} "-g1 ${${flag_var}}")
+      string(STRIP "${${flag_var}}" ${flag_var})
+    endforeach()
+    message(STATUS "RelWithDebInfo: using -g1 to reduce debug info size")
+  endif()
+
   # ld option to warn if symbols are undefined (e.g. libtvm_runtime.so
   # using symbols only present in libtvm.so).  Not needed for MSVC,
   # since this is already the default there.
